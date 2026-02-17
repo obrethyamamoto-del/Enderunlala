@@ -1,0 +1,158 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.institutionInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #F8FAFC;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+}
+
+.instIcon {
+    color: #8B5CF6;
+}
+
+.instLabel {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94A3B8;
+    letter-spacing: 0.5px;
+}
+
+.instName {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 15px;
+}
+
+.formCard {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #F1F5F9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.formTitle {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1E293B;
+    margin-bottom: 20px;
+}
+
+.inputGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.formActions {
+    display: flex;
+    gap: 12px;
+}
+
+.listSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.listTitle {
+    font-size: 14px;
+    font-weight: 800;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.classList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.classItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #F1F5F9;
+    border-radius: 14px;
+    transition: all 0.2s ease;
+}
+
+.classItem:hover {
+    background: #E2E8F0;
+    transform: translateX(4px);
+}
+
+.className {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.classBadge {
+    background: white;
+    color: #8B5CF6;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.itemActions {
+    display: flex;
+    gap: 8px;
+}
+
+.actionBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: white;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.actionBtn:hover {
+    background: #8B5CF6;
+    color: white;
+    border-color: #8B5CF6;
+    transform: translateY(-2px);
+}
+
+.actionBtn.delete:hover {
+    background: #EF4444;
+    border-color: #EF4444;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 32px;
+    color: #94A3B8;
+    font-size: 14px;
+    font-weight: 500;
+    background: #F8FAFC;
+    border-radius: 16px;
+    border: 1px dashed #E2E8F0;
+}

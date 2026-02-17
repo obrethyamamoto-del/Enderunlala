@@ -1,0 +1,532 @@
+/* Sessions — New Vibrant Design */
+
+/* Use Global Page Container logic via composition or duplication if strictly module scoped */
+.page {
+    /* Maps to global .page-container logic */
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    padding: var(--space-6);
+}
+
+@media (max-width: 640px) {
+    .page {
+        padding: var(--space-4);
+    }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    margin-bottom: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+    .header {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: var(--space-6);
+    }
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
+}
+
+@media (min-width: 640px) {
+    .title {
+        font-size: 32px;
+    }
+}
+
+.headerTitle {
+    display: flex;
+    flex-direction: column;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}
+
+@media (min-width: 640px) {
+    .subtitle {
+        font-size: 16px;
+    }
+}
+
+.contextBar {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    flex-direction: column;
+}
+
+@media (min-width: 640px) {
+    .contextBar {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 20px;
+    }
+}
+
+.contextItem {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.contextLabel {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.5px;
+    padding-left: 2px;
+    text-transform: uppercase;
+}
+
+
+.vibrantAddBtn {
+    background: var(--color-primary) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 700 !important;
+    padding: 0 24px !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.25) !important;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s !important;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .vibrantAddBtn {
+        width: auto;
+    }
+}
+
+.vibrantAddBtn:hover {
+    transform: translateY(-2px);
+    background: var(--color-primary-dark) !important;
+    box-shadow: 0 12px 20px rgba(139, 92, 246, 0.35) !important;
+}
+
+.liveRecordBtn {
+    background: var(--color-admin) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 700 !important;
+    padding: 0 24px !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    box-shadow: 0 8px 16px rgba(255, 45, 85, 0.25) !important;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s !important;
+    width: 100%;
+    cursor: pointer;
+}
+
+@media (min-width: 640px) {
+    .liveRecordBtn {
+        width: auto;
+    }
+}
+
+.liveRecordBtn:hover {
+    transform: translateY(-2px);
+    background: #E61E4D !important;
+    box-shadow: 0 12px 20px rgba(255, 45, 85, 0.35) !important;
+}
+
+.liveIcon {
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.headerActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+    .headerActions>button {
+        width: 100%;
+    }
+}
+
+/* List Style — Pill Rows */
+.sessionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sessionItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 24px;
+    background-color: var(--color-bg-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+}
+
+@media (min-width: 640px) {
+    .sessionItem {
+        align-items: center;
+        gap: 24px;
+        padding: 20px 28px;
+    }
+}
+
+/* Colorful Variations Pattern */
+/* Removed Nth Child Colorful Variations to strictly follow status colors */
+/* Kept generic hover only */
+
+.sessionItem:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border-strong);
+}
+
+/* Icon Container */
+.sessionIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background-color: var(--color-bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+/* Info */
+.sessionInfo {
+    flex: 1;
+    min-width: 0;
+    /* Critical for wrapping */
+    display: flex;
+    flex-direction: column;
+}
+
+.statusWrapper {
+    margin-top: 10px;
+}
+
+.sessionTitle {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (min-width: 640px) {
+    .sessionTitle {
+        font-size: 17px;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+}
+
+.sessionMeta {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* Right Actions */
+.sessionRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (min-width: 640px) {
+    .sessionRight {
+        gap: var(--space-4);
+    }
+}
+
+/* Row-Harmony Badges */
+/* Consistent Status Backgrounds */
+.itemRecorded {
+    background-color: #EFF6FF !important;
+    border-color: #DBEAFE !important;
+}
+
+.itemTranscribed {
+    background-color: #FAF5FF !important;
+    border-color: #F3E8FF !important;
+}
+
+.itemDraft {
+    background-color: #FFF7ED !important;
+    border-color: #FFEDD5 !important;
+}
+
+.itemPublished {
+    background-color: #F0FDF4 !important;
+    border-color: #DCFCE7 !important;
+}
+
+/* Icon Colors Logic */
+.itemRecorded .sessionIcon,
+.itemRecorded .quizIcon {
+    color: #3B82F6;
+}
+
+.itemTranscribed .sessionIcon,
+.itemTranscribed .quizIcon {
+    color: #7E22CE;
+}
+
+.itemDraft .sessionIcon,
+.itemDraft .quizIcon {
+    color: #F97316;
+}
+
+.itemPublished .sessionIcon,
+.itemPublished .quizIcon {
+    color: #10B981;
+}
+
+/* Badges Base */
+.badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+
+
+/* Badge Colors - Strict System */
+.badgeRecorded {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    /* Blue */
+}
+
+.badgeTranscribed {
+    background-color: #F3E8FF;
+    color: #7E22CE;
+    /* Purple */
+}
+
+.badgeDraft {
+    background-color: #FFEDD5;
+    color: #C2410C;
+    /* Orange - Sorular Onaylandı */
+}
+
+.badgePublished {
+    background-color: #D1FAE5;
+    color: #047857;
+    /* Green - Yayında */
+}
+
+.badgeProcessing {
+    background-color: #F3F4F6;
+    color: #4B5563;
+    animation: pulse 2s infinite;
+}
+
+.badgeDefault {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+
+
+/* Menu */
+.menuBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.menuBtn:hover {
+    background-color: white;
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.menuDropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 8px;
+    min-width: 160px;
+    z-index: 50;
+    border: 1px solid var(--color-gray-100);
+}
+
+.menuItem {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.menuItem:hover {
+    background-color: var(--color-gray-50);
+    color: var(--color-primary);
+}
+
+.menuItemDanger:hover {
+    background-color: var(--color-error-light);
+    color: var(--color-error);
+}
+
+/* Empty State */
+.emptyState {
+    background: var(--color-bg-secondary);
+    border-radius: 32px;
+    padding: 60px;
+    text-align: center;
+    border: 2px dashed var(--color-border);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    background: #F1F5F9;
+    padding: 6px;
+    border-radius: 18px;
+    width: fit-content;
+}
+
+.tab {
+    padding: 10px 28px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--color-text-tertiary);
+    border: none;
+    background: transparent;
+}
+
+.tab.active {
+    background: white;
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Quiz Specific Items */
+.quizItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 24px;
+    background-color: var(--color-bg-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+}
+
+@media (min-width: 640px) {
+    .quizItem {
+        align-items: center;
+        gap: 24px;
+        padding: 20px 28px;
+    }
+}
+
+.quizItem:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border-strong);
+}
+
+.quizIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background-color: var(--color-bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}

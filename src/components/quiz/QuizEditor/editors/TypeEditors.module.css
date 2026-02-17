@@ -1,0 +1,198 @@
+/* ============================================
+   ORTAK STİLLER - TÜM SORU TİPLERİ İÇİN
+   ============================================ */
+
+.textarea {
+    width: 100%;
+    padding: 16px;
+    font-size: 14px;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #8B5CF6;
+}
+
+/* Editor actions — Bottom row for options like 'Birden fazla doğru cevap' */
+.editorActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 24px;
+    border-top: 1px solid #F3F4F6;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    cursor: pointer;
+}
+
+.checkbox input {
+    width: 18px;
+    height: 18px;
+    accent-color: #8B5CF6;
+    border-radius: 50%;
+    /* Circle for checkboxes per image */
+}
+
+.removeButton {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #9CA3AF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.removeButton:hover:not(:disabled) {
+    color: #EF4444;
+}
+
+/* ============================================
+   ÇOKTAN SEÇMELİ (MULTIPLE CHOICE)
+   ============================================ */
+
+.mcEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.optionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.optionItem {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.optionLabel {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background-color: #F3F4F6;
+    color: #374151;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.optionLabel:hover {
+    background-color: #E5E7EB;
+}
+
+.optionLabel.selected {
+    background-color: #10B981;
+    color: white;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.optionInput {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    background-color: white;
+    border: 1px solid #F3F4F6;
+    border-radius: 12px;
+    transition: all 0.2s;
+    min-width: 0;
+}
+
+.optionInput:focus {
+    outline: none;
+    border-color: #8B5CF6;
+    background-color: white;
+}
+
+.optionItem.correct .optionInput {
+    border-color: #10B981;
+    background-color: #F0FDF4;
+    /* Light success bg for the input itself as well */
+}
+
+/* Addition Styles for the "Add Option" button in MultipleChoiceEditor.tsx */
+.addOptionBtn {
+    color: #8B5CF6 !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+}
+
+/* Rest of the editors (TF, OE, Match, FB) omitted for brevity or kept minimal 
+   as the focus is on matching the Multiple Choice image provided */
+
+/* TRUE/FALSE */
+.tfEditor {
+    display: flex;
+    gap: 16px;
+}
+
+.tfButton {
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    background: white;
+    cursor: pointer;
+}
+
+.tfButton.selected {
+    background: #8B5CF6;
+    color: white;
+    border-color: #8B5CF6;
+}
+
+/* OPEN ENDED */
+.oeEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* MATCHING */
+.matchEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.matchPairItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* FILL BLANK */
+.fbEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

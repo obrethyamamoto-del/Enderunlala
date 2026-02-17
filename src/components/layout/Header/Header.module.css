@@ -1,0 +1,241 @@
+/* Header — iOS Navigation Bar Style */
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: rgba(249, 249, 251, 0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+    z-index: var(--z-fixed);
+}
+
+@media (min-width: 640px) {
+    .header {
+        padding: 0 var(--space-6);
+    }
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+/* Hamburger: hidden on mobile (we use tab bar), shown on desktop for sidebar toggle */
+.menuBtn {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+}
+
+.menuBtn:hover {
+    background-color: var(--color-primary-light);
+    transform: scale(1.05);
+}
+
+.menuBtn:active {
+    transform: scale(0.95);
+}
+
+.menuBtn:hover {
+    background-color: var(--color-fill);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    text-decoration: none;
+    color: var(--color-text-primary);
+}
+
+.logo:hover {
+    opacity: 1;
+}
+
+.logoIcon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.logoText {
+    font-size: var(--text-md);
+    font-weight: var(--font-bold);
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+@media (min-width: 640px) {
+    .logoText {
+        font-size: var(--text-lg);
+    }
+}
+
+.desktopNav {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .left {
+        gap: var(--space-8);
+    }
+
+    .desktopNav {
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+        margin-left: var(--space-4);
+    }
+}
+
+.navLink,
+.activeNavLink {
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    transition: all 0.2s;
+    padding: 8px 0;
+    position: relative;
+}
+
+.navLink:hover {
+    color: var(--color-primary);
+}
+
+.activeNavLink {
+    color: var(--color-primary);
+}
+
+.activeNavLink::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--color-primary);
+    border-radius: 2px;
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+@media (min-width: 640px) {
+    .right {
+        gap: var(--space-3);
+    }
+}
+
+.iconBtn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    transition: background-color var(--transition-fast);
+}
+
+.iconBtn:hover {
+    background-color: var(--color-fill);
+}
+
+.badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    background-color: var(--color-error);
+    color: white;
+    font-size: 10px;
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.userMenu {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+/* Hide text user info on mobile */
+.userInfo {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .userInfo {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+}
+
+.userName {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+    line-height: 1.2;
+}
+
+.userRole {
+    font-size: var(--text-xs);
+    font-weight: var(--font-medium);
+    line-height: 1.2;
+}
+
+.teacher {
+    color: var(--color-teacher);
+}
+
+.student {
+    color: var(--color-student);
+}
+
+.admin {
+    color: var(--color-admin);
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-fill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

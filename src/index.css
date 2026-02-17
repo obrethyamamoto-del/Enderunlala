@@ -1,0 +1,13 @@
+/* index.css — minimal reset, globals.css handles the rest */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}

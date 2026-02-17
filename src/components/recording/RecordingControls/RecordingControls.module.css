@@ -1,0 +1,69 @@
+/* RecordingControls — Mobile First */
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+}
+
+.recordBtn {
+    min-width: 160px;
+}
+
+@media (min-width: 480px) {
+    .recordBtn {
+        min-width: 200px;
+    }
+}
+
+/* Recording controls — stacked full-width on mobile, horizontal on sm+ */
+.recordingControls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+}
+
+@media (min-width: 480px) {
+    .recordingControls {
+        flex-direction: row;
+        gap: var(--space-4);
+        width: auto;
+    }
+}
+
+.recordingControls button {
+    width: 100%;
+}
+
+@media (min-width: 480px) {
+    .recordingControls button {
+        width: auto;
+    }
+}
+
+/* Post-recording controls — stacked full-width on mobile, horizontal on sm+ */
+.postRecordingControls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+}
+
+@media (min-width: 480px) {
+    .postRecordingControls {
+        flex-direction: row;
+        gap: var(--space-4);
+        width: auto;
+    }
+}
+
+.postRecordingControls button {
+    width: 100%;
+}
+
+@media (min-width: 480px) {
+    .postRecordingControls button {
+        width: auto;
+    }
+}

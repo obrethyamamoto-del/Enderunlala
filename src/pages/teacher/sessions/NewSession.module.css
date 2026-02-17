@@ -1,0 +1,463 @@
+.page {
+    padding: var(--space-6) var(--space-8);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+/* Top Navigation */
+.topNav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.backBtn:hover {
+    color: var(--color-primary);
+}
+
+@media (min-width: 640px) {
+    .pageTitle {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1E293B;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 640px) {
+    .topNav {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+
+    .pageTitle {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1E293B;
+        position: static;
+        transform: none;
+    }
+
+    .backBtn {
+        align-self: flex-start;
+    }
+}
+
+/* Content Grid */
+.contentGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Base Card Style */
+.guideCard,
+.recorderCard {
+    background: white;
+    border-radius: 32px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid #F1F5F9;
+}
+
+/* Guide Card */
+.guideHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.iconCircle {
+    width: 48px;
+    height: 48px;
+    background: #F1F0FF;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8B5CF6;
+}
+
+.guideTitle {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1E293B;
+}
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.step {
+    display: flex;
+    gap: 20px;
+}
+
+.stepNumber {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.stepNumber.purple {
+    background: #8B5CF6;
+}
+
+.stepNumber.pink {
+    background: #EC4899;
+}
+
+.stepContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stepTitle {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1E293B;
+}
+
+.stepDesc {
+    font-size: 15px;
+    color: #64748B;
+    line-height: 1.6;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F5F3FF;
+    color: #8B5CF6;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    width: fit-content;
+}
+
+.featureGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.featureItem {
+    background: white;
+    border: 1px solid #F1F5F9;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    transition: all 0.2s;
+}
+
+.featureItem:hover {
+    border-color: #E2E8F0;
+    background: #F8FAFC;
+}
+
+.featureIcon {
+    color: #3B82F6;
+}
+
+/* Recorder Card */
+.recorderCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 32px;
+}
+
+.visualizerContainer {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (min-width: 640px) {
+    .visualizerContainer {
+        width: 240px;
+        height: 240px;
+    }
+}
+
+.micCircle {
+    width: 80px;
+    height: 80px;
+    background: #8B5CF6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 2;
+    box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+}
+
+@media (min-width: 640px) {
+    .micCircle {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+.pulseCircles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #F5F3FF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pulse1,
+.pulse2 {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.pulse1 {
+    width: 160px;
+    height: 160px;
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.pulse2 {
+    width: 220px;
+    height: 220px;
+    background: rgba(139, 92, 246, 0.02);
+}
+
+.timerWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timerDisplay {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1E293B;
+}
+
+@media (min-width: 640px) {
+    .timerDisplay {
+        font-size: 48px;
+    }
+}
+
+.timerHint {
+    font-size: 14px;
+    color: #94A3B8;
+    font-weight: 600;
+}
+
+.actionsWrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.mainRecordBtn {
+    width: 100%;
+    height: 64px !important;
+    background: #8B5CF6 !important;
+    border-radius: 20px !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    box-shadow: 0 10px 20px rgba(139, 92, 246, 0.25) !important;
+}
+
+.recordDot {
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+    display: inline-block;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+}
+
+.orDivider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #94A3B8;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.orDivider::before,
+.orDivider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #E2E8F0;
+}
+
+.uploadZone {
+    border: 2px dashed #E2E8F0;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.uploadZone:hover {
+    border-color: #8B5CF6;
+    background: #F5F3FF;
+}
+
+.uploadIconBox {
+    width: 44px;
+    height: 44px;
+    background: #F1F5F9;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748B;
+}
+
+.uploadText strong {
+    display: block;
+    font-size: 14px;
+    color: #334155;
+    margin-bottom: 2px;
+}
+
+.uploadText p {
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+.pageFooter {
+    margin-top: auto;
+    text-align: center;
+    padding-bottom: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #94A3B8;
+}
+
+/* Response Banners */
+.recoveryBanner,
+.offlineBanner,
+.uploadErrorSection {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 16px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 1024px) {
+    .contentGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .page {
+        padding: 20px;
+    }
+
+    .guideCard,
+    .recorderCard {
+        padding: 24px;
+    }
+
+    .featureGrid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,56 @@
+/* Card — iOS Grouped Style */
+
+.card {
+    background-color: var(--color-bg-elevated);
+    border-radius: var(--radius-xl);
+    transition: transform var(--transition-fast);
+}
+
+/* Variants */
+.default {
+    background-color: var(--color-bg-elevated);
+    border: none;
+}
+
+.bordered {
+    border: 0.5px solid var(--color-separator);
+}
+
+.elevated {
+    box-shadow: var(--shadow-card);
+}
+
+/* Padding variants */
+.paddingNone {
+    padding: 0;
+}
+
+.paddingSm {
+    padding: var(--space-3);
+}
+
+.paddingMd {
+    padding: var(--space-4);
+}
+
+.paddingLg {
+    padding: var(--space-5);
+}
+
+@media (min-width: 640px) {
+    .paddingSm {
+        padding: var(--space-4);
+    }
+
+    .paddingMd {
+        padding: var(--space-5);
+    }
+
+    .paddingLg {
+        padding: var(--space-6);
+    }
+}
+
+.hoverable:active {
+    transform: scale(0.98);
+}

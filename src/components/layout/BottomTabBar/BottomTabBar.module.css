@@ -1,0 +1,66 @@
+/* BottomTabBar — iOS Tab Bar */
+
+.tabBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--tabbar-height);
+    background: rgba(249, 249, 251, 0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 6px;
+    padding-bottom: var(--safe-area-bottom);
+    z-index: var(--z-tabbar);
+}
+
+/* Hide on desktop */
+@media (min-width: 1024px) {
+    .tabBar {
+        display: none;
+    }
+}
+
+.tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 0;
+    min-width: 64px;
+    text-decoration: none;
+    color: var(--color-gray-500);
+    transition: color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tab:hover {
+    text-decoration: none;
+    opacity: 1;
+}
+
+.tab.active {
+    color: var(--color-primary);
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+}
+
+.label {
+    font-size: 10px;
+    font-weight: var(--font-medium);
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+.tab.active .label {
+    font-weight: var(--font-semibold);
+}

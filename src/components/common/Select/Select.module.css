@@ -1,0 +1,123 @@
+.selectContainer {
+    position: relative;
+    width: 100%;
+}
+
+.selectBox {
+    background: white;
+    border: 1px solid #EAEFF5;
+    border-radius: 12px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 100%;
+    height: 52px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.selectBox:hover {
+    border-color: #CBD5E0;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.selectBox.active {
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.icon {
+    color: #8E9AAF;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.currentValue {
+    flex: 1;
+    font-weight: 700;
+    color: #2D3748;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.arrow {
+    color: #8E9AAF;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    border: 1px solid #EAEFF5;
+    z-index: 100;
+    animation: slideDown 0.2s cubic-bezier(0, 0, 0.2, 1);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.option {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4A5568;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.option:hover {
+    background-color: #F7FAFC;
+    color: #8B5CF6;
+}
+
+.option.selected {
+    background-color: #F5F3FF;
+    color: #8B5CF6;
+}
+
+/* Custom Scrollbar */
+.dropdownMenu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdownMenu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdownMenu::-webkit-scrollbar-thumb {
+    background: #E2E8F0;
+    border-radius: 10px;
+}
+
+.dropdownMenu::-webkit-scrollbar-thumb:hover {
+    background: #CBD5E0;
+}

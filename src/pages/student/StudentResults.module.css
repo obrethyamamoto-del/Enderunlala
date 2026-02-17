@@ -1,0 +1,266 @@
+/* StudentResults — iOS Style */
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
+    padding: var(--space-4);
+}
+
+@media (min-width: 640px) {
+    .container {
+        padding: var(--space-6);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+@media (min-width: 768px) {
+    .header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+}
+
+.title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-1);
+}
+
+@media (min-width: 640px) {
+    .title {
+        font-size: var(--text-3xl);
+    }
+}
+
+.subtitle {
+    font-size: var(--text-base);
+    color: var(--color-text-tertiary);
+}
+
+.summaryStats {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.summaryItem {
+    background: var(--color-bg-elevated);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    min-width: 72px;
+}
+
+.summaryValue {
+    display: block;
+    font-size: var(--text-lg);
+    font-weight: var(--font-heavy);
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+}
+
+.summaryLabel {
+    font-size: 10px;
+    font-weight: var(--font-semibold);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.resetBtn {
+    background: var(--color-error-light);
+    color: var(--color-error);
+    border-radius: var(--radius-lg);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.resetBtn:active {
+    opacity: 0.7;
+}
+
+/* iOS grouped list */
+.resultsList {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.resultItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    border-bottom: 1px solid var(--color-gray-100);
+    border: none;
+    text-decoration: none;
+    color: inherit;
+}
+
+.resultItem:last-child {
+    border-bottom: none;
+}
+
+.resultItem:active {
+    background-color: var(--color-fill-secondary);
+}
+
+.resultMain {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 0;
+}
+
+.iconWrapper {
+    width: 40px;
+    height: 40px;
+    background: var(--color-fill-secondary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+.quizInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.quizTitle {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quizMeta {
+    display: flex;
+    gap: var(--space-3);
+    color: var(--color-text-tertiary);
+    font-size: var(--text-xs);
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.resultStats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
+}
+
+.scoreInfo {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .scoreInfo {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+}
+
+.scoreLabel {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-semibold);
+}
+
+.scoreValue {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-secondary);
+}
+
+.percentageBadge {
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-weight: var(--font-bold);
+    font-size: var(--text-sm);
+    min-width: 52px;
+    text-align: center;
+}
+
+.passed {
+    background-color: var(--color-success-light);
+    color: var(--color-success-dark);
+}
+
+.failed {
+    background-color: var(--color-error-light);
+    color: var(--color-error-dark);
+}
+
+.arrow {
+    color: var(--color-gray-300);
+    flex-shrink: 0;
+}
+
+.emptyState {
+    padding: var(--space-16) var(--space-6);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.emptyState h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-secondary);
+}
+
+.emptyState p {
+    color: var(--color-text-tertiary);
+    max-width: 300px;
+    font-size: var(--text-base);
+}
