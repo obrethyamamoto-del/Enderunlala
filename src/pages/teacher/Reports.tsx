@@ -9,7 +9,6 @@ import {
     Search,
     ArrowLeft,
     BookOpen,
-    CheckCircle2,
     XCircle,
     Info,
     BarChart2,
@@ -17,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { getQuizzesByTeacher, getQuizSubmissions, getQuiz } from '../../services/quizService';
+import { getQuizzesByTeacher, getQuizSubmissions } from '../../services/quizService';
 import { getAllStudents } from '../../services/userService';
 import { Loader, Input, Card, Button } from '../../components/common';
 import type { Teacher, AppUser } from '../../types';
@@ -190,7 +189,7 @@ export const Reports: React.FC = () => {
             });
             return {
                 id: question.id,
-                text: question.text,
+                text: question.question,
                 correctPercentage: Math.round((correctCount / subs.length) * 100),
                 total: subs.length,
                 correct: correctCount

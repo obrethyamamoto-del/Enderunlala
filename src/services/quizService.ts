@@ -418,7 +418,7 @@ export const submitQuiz = async (
                 const correctOptionIds = (q.options || []).filter((o: any) => o.isCorrect).map((o: any) => o.id);
                 const selectedOptionIds = answer.selectedOptionIds || [];
                 isCorrect = correctOptionIds.length === selectedOptionIds.length &&
-                    correctOptionIds.every(id => selectedOptionIds.includes(id));
+                    correctOptionIds.every((id: string) => selectedOptionIds.includes(id));
                 break;
             }
             case 'true_false': {

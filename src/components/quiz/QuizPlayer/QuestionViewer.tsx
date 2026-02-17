@@ -153,7 +153,6 @@ const QuestionViewerInternal: React.FC<QuestionViewerProps> = ({
     question,
     answer,
     onAnswerChange,
-    onQuestionUpdate,
     readOnly = false,
     showFeedback = false,
 }) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button, Input } from '../../../common';
 import type { FillBlankQuestion, BlankSlot } from '../../../../types/quiz';
