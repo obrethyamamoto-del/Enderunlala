@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './config/firebase';
@@ -58,7 +58,7 @@ export const App: React.FC = () => {
   }, [setFirebaseUser, setUser, setLoading, setInitialized]);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         {/* Public routes */}
         <Route path={ROUTES.LOGIN} element={<Login />} />
@@ -167,22 +167,6 @@ export const App: React.FC = () => {
             }
           />
           <Route
-            path={ROUTES.STUDENT.ASSIGNMENTS}
-            element={
-              <ProtectedRoute allowedRoles={['student']}>
-                <PlaceholderPage title="Ödevlerim" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={ROUTES.STUDENT.RESULTS}
-            element={
-              <ProtectedRoute allowedRoles={['student']}>
-                <StudentResults />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path={ROUTES.STUDENT.QUIZ_PLAYER}
             element={
               <ProtectedRoute allowedRoles={['student']}>
@@ -198,7 +182,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path={ROUTES.STUDENT.RESULTS}
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentResults />
+              </ProtectedRoute>
+            }
+          />
           {/* Admin routes */}
           <Route
             path={ROUTES.ADMIN.DASHBOARD}
@@ -208,54 +199,13 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path={ROUTES.ADMIN.TEACHERS}
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlaceholderPage title="Öğretmenler" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={ROUTES.ADMIN.STUDENTS}
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlaceholderPage title="Öğrenciler" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={ROUTES.ADMIN.SESSIONS}
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlaceholderPage title="Tüm AI Analizler" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={ROUTES.ADMIN.REPORTS}
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlaceholderPage title="Raporlar" />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path={ROUTES.ADMIN.SETTINGS}
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlaceholderPage title="Ayarlar" />
-              </ProtectedRoute>
-            }
-          />
         </Route>
 
         {/* Catch all - redirect to login */}
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
       </Routes>
-
       <ToastContainer />
-    </BrowserRouter >
+    </HashRouter>
   );
 };
 
