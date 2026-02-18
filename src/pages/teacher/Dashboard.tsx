@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent, Button, Select } from '../../components/common';
-import { BarChart3, Mic, FileText, CheckCircle, ChevronRight, Plus, School, Radio } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Select, Loader } from '../../components/common';
+import { School, Radio, Plus, ArrowRight, Wand2, ClipboardCheck, Zap, CheckCircle, Mic } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { getTeacherSessions } from '../../services/sessionService';
 import { getQuizzesByTeacher } from '../../services/quizService';
@@ -19,12 +19,12 @@ export const TeacherDashboard: React.FC = () => {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedClass, setSelectedClass] = useState<string>('');
+    const [selectedClass, setSelectedClass] = useState<string>('all');
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
 
     useEffect(() => {
         if (user?.assignedClasses?.length > 0) {
-            setSelectedClass(user.assignedClasses[0]);
+            setSelectedClass('all');
         }
     }, [user]);
 
@@ -60,9 +60,8 @@ export const TeacherDashboard: React.FC = () => {
 
             try {
                 setIsLoading(true);
-                // Son 5 analizi ve tüm sınavları çek
                 const [fetchedSessions, fetchedQuizzes] = await Promise.all([
-                    getTeacherSessions(user.id, 5),
+                    getTeacherSessions(user.id),
                     getQuizzesByTeacher(user.id)
                 ]);
 
@@ -78,34 +77,58 @@ export const TeacherDashboard: React.FC = () => {
         fetchDashboardData();
     }, [user]);
 
+    const filteredSessions = useMemo(() => {
+        if (!selectedClass || selectedClass === 'all') return sessions;
+        return sessions.filter((s: Session) => s.classId === selectedClass);
+    }, [sessions, selectedClass]);
+
+    const filteredQuizzes = useMemo(() => {
+        if (!selectedClass || selectedClass === 'all') return quizzes;
+        return quizzes.filter((q: Quiz) => q.classId === selectedClass);
+    }, [quizzes, selectedClass]);
+
+    const completedQuizzes = useMemo(() => {
+        return filteredQuizzes
+            .filter((q: Quiz) => q.status === 'closed')
+            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+            .slice(0, 5);
+    }, [filteredQuizzes]);
+
     const stats = [
         {
             icon: <Mic size={24} />,
-            label: 'AI Analiz',
-            value: sessions.length.toString(),
-            color: 'primary',
-            path: ROUTES.TEACHER.SESSIONS
+            label: 'Kayıtlı Derslerim',
+            value: filteredSessions.filter((s: Session) => s.status === 'recorded').length.toString(),
+            color: 'recorded',
+            path: `${ROUTES.TEACHER.SESSIONS}?status=recorded`
         },
         {
-            icon: <FileText size={24} />,
-            label: 'Sınavlar',
-            value: quizzes.length.toString(),
-            color: 'accent',
-            path: ROUTES.TEACHER.QUIZZES
+            icon: <ClipboardCheck size={24} />,
+            label: 'Onay Bekleyenler',
+            value: (
+                filteredQuizzes.filter((q: Quiz) => q.status === 'draft').length +
+                filteredSessions.filter((s: Session) => {
+                    if (s.status !== 'transcribed') return false;
+                    const hasAssociatedQuiz = quizzes.some(q => q.sessionId === s.id);
+                    return !hasAssociatedQuiz;
+                }).length
+            ).toString(),
+            color: 'draft',
+            path: `${ROUTES.TEACHER.SESSIONS}?status=draft`
         },
         {
             icon: <CheckCircle size={24} />,
-            label: 'Aktif Sınav',
-            value: quizzes.filter(q => q.status === 'published').length.toString(),
-            color: 'secondary',
-            path: ROUTES.TEACHER.QUIZZES
+            label: 'Yayına Hazır',
+            value: filteredQuizzes.filter((q: Quiz) => q.status === 'approved').length.toString(),
+            color: 'approved',
+            path: `${ROUTES.TEACHER.SESSIONS}?status=approved`
         },
         {
-            icon: <BarChart3 size={24} />,
-            label: 'Onay Bekleyenler',
-            value: quizzes.filter(q => q.status === 'draft').length.toString(),
-            color: 'teacher',
-            path: ROUTES.TEACHER.QUIZZES
+            icon: <Zap size={24} />,
+            label: 'Aktif Sınav',
+            value: filteredQuizzes.filter((q: Quiz) => q.status === 'published').length.toString(),
+            color: 'published',
+            path: `${ROUTES.TEACHER.QUIZZES}?status=published`
         },
     ];
 
@@ -113,6 +136,7 @@ export const TeacherDashboard: React.FC = () => {
         return (
             <div className={styles.page}>
                 <div className={styles.loadingState}>
+                    <Loader size="lg" />
                     <p>Dashboard yükleniyor...</p>
                 </div>
             </div>
@@ -141,7 +165,10 @@ export const TeacherDashboard: React.FC = () => {
                     <div className={styles.contextItem}>
                         <label className={styles.contextLabel}>AKTİF SINIF</label>
                         <Select
-                            options={user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || []}
+                            options={[
+                                { value: 'all', label: 'Tüm Sınıflar' },
+                                ...(user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || [])
+                            ]}
                             value={selectedClass}
                             onChange={(val) => setSelectedClass(val)}
                             placeholder="Sınıf Seçin"
@@ -176,119 +203,84 @@ export const TeacherDashboard: React.FC = () => {
                         key={index}
                         className={`${styles.statCard} ${styles[stat.color]}`}
                         onClick={() => navigate(stat.path)}
-                        style={{ cursor: 'pointer' }}
                     >
-                        {/* Header: Small Icon */}
-                        <div className={styles.statHeader}>
-                            <div className={styles.statIconWrapper}>
+                        <div className={styles.statIconWrapper}>
+                            <div className={styles.statIcon}>
                                 {stat.icon}
                             </div>
                         </div>
-
-                        {/* Footer: Value & Label */}
-                        <div className={styles.statInfo}>
-                            <span className={styles.statValue}>{stat.value}</span>
-                            <span className={styles.statLabel}>{stat.label}</span>
+                        <div className={styles.statContent}>
+                            <div className={styles.statValue}>{stat.value}</div>
+                            <div className={styles.statLabel}>{stat.label}</div>
                         </div>
-
-                        {/* Decorative Background Icon */}
                         <div className={styles.statBgIcon}>
                             {stat.icon}
                         </div>
+                        <div className={styles.cardOverlay} />
                     </div>
                 ))}
             </div>
 
-            <div className={styles.contentGrid}>
-                {/* Son AI Analizler */}
-                <Card variant="default" padding="lg" className={styles.activityCard}>
-                    <CardHeader>
-                        <div className={styles.sectionHeader}>
-                            <CardTitle subtitle="En son kaydettiğiniz dersler">
-                                Son AI Analizler
-                            </CardTitle>
-                            <Link to={ROUTES.TEACHER.SESSIONS} className={styles.seeAllLink}>
-                                Tümünü Gör
-                            </Link>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className={styles.activityList}>
-                            {sessions.length > 0 ? (
-                                sessions.map((session) => (
-                                    <div
-                                        key={session.id}
-                                        className={styles.activityItem}
-                                        onClick={() => navigate(`${ROUTES.TEACHER.SESSIONS}/${session.id}`)}
-                                    >
-                                        <div className={styles.statIconWrapper} style={{ width: '40px', height: '40px', background: 'white', color: 'inherit', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                            <Mic size={18} />
-                                        </div>
-                                        <div className={styles.activityContent}>
-                                            <h4 className={styles.activityTitle}>{session.title}</h4>
-                                            <span className={styles.activityMeta}>
-                                                {session.createdAt?.toDate().toLocaleDateString('tr-TR')}
-                                            </span>
-                                        </div>
-                                        <ChevronRight size={16} className={styles.activityArrow} />
-                                    </div>
-                                ))
-                            ) : (
-                                <div className={styles.emptyState}>
-                                    <p>Henüz AI analiz kaydı yok.</p>
-                                    <Link to={ROUTES.TEACHER.SESSIONS} className={styles.emptyAction}>
-                                        Yeni ders oluştur
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Recently Completed Quizzes Section */}
+            <div className={styles.recentSection}>
+                <div className={styles.recentHeader}>
+                    <h2 className={styles.recentTitle}>Sonuçlanan Sınavlar</h2>
+                    <div
+                        className={styles.viewAll}
+                        onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}?status=closed`)}
+                    >
+                        Tümünü Gör <ArrowRight size={16} />
+                    </div>
+                </div>
 
-                {/* Sınavlar Özeti / Son Sınavlar */}
-                <Card variant="default" padding="lg" className={styles.activityCard}>
-                    <CardHeader>
-                        <div className={styles.sectionHeader}>
-                            <CardTitle subtitle="Oluşturduğunuz son sınavlar">
-                                Son Sınavlar
-                            </CardTitle>
-                            <Link to={ROUTES.TEACHER.QUIZZES} className={styles.seeAllLink}>
-                                Tümünü Gör
-                            </Link>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className={styles.activityList}>
-                            {quizzes.length > 0 ? (
-                                quizzes.slice(0, 5).map((quiz) => (
-                                    <div
-                                        key={quiz.id}
-                                        className={styles.activityItem}
-                                        onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}`)}
-                                    >
-                                        <div className={styles.statIconWrapper} style={{ width: '40px', height: '40px', background: 'white', color: 'inherit', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                            <FileText size={18} />
-                                        </div>
-                                        <div className={styles.activityContent}>
-                                            <h4 className={styles.activityTitle}>{quiz.title}</h4>
-                                            <span className={styles.activityMeta}>
-                                                {quiz.questions?.length || 0} SORU • {quiz.status === 'published' ? 'YAYINDA' : 'SORULAR ONAYLANDI'}
-                                            </span>
-                                        </div>
-                                        <ChevronRight size={16} className={styles.activityArrow} />
+                {
+                    completedQuizzes.length === 0 ? (
+                        <div className={styles.recentEmpty}>
+                            <div className={styles.emptyIllustration}>
+                                <div className={styles.illustrationMain}>
+                                    <div className={styles.illustrationFace}>
+                                        <div className={styles.faceEye} />
+                                        <div className={styles.faceEye} />
                                     </div>
-                                ))
-                            ) : (
-                                <div className={styles.emptyState}>
-                                    <p>Henüz sınav oluşturmadınız.</p>
-                                    <Link to={ROUTES.TEACHER.QUIZZES} className={styles.emptyAction}>
-                                        Sınav oluştur
-                                    </Link>
+                                    <div className={styles.illustrationLines}>
+                                        <div className={styles.illuLine} />
+                                        <div className={styles.illuLine} />
+                                    </div>
                                 </div>
-                            )}
+                                <div className={styles.illustrationSearch}>
+                                    <Wand2 size={24} />
+                                </div>
+                            </div>
+                            <h3 className={styles.emptyTitle}>Henüz Sonuç Yok!</h3>
+                            <p className={styles.emptySubtitle}>Henüz sonuçlanmış bir sınav bulunmuyor.</p>
                         </div>
-                    </CardContent>
-                </Card>
+                    ) : (
+                        <div className={styles.recentList}>
+                            {completedQuizzes.map((quiz) => (
+                                <div
+                                    key={quiz.id}
+                                    className={styles.recentItem}
+                                    onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}/results`)}
+                                >
+                                    <div className={styles.recentItemIcon}>
+                                        <CheckCircle size={24} />
+                                    </div>
+                                    <div className={styles.recentItemContent}>
+                                        <h3 className={styles.recentItemTitle}>{quiz.title}</h3>
+                                        <div className={styles.recentItemMeta}>
+                                            <span>{quiz.classId || 'Genel'}</span>
+                                            <span>•</span>
+                                            <span>{quiz.questions?.length || 0} Soru</span>
+                                            <span>•</span>
+                                            <span className={styles.detailBadge}>Tamamlandı</span>
+                                        </div>
+                                    </div>
+                                    <ArrowRight size={18} style={{ color: 'var(--color-text-tertiary)' }} />
+                                </div>
+                            ))}
+                        </div>
+                    )
+                }
             </div>
 
             <ClassManagementModal

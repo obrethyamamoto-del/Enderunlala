@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     MoreVertical,
     FileText,
     School,
-    Radio
+    Zap,
+    CheckCircle
 } from 'lucide-react';
-import { Button, Loader, Select } from '../../../components/common';
+import { Loader, Select, ConfirmModal } from '../../../components/common';
 import { getQuizzesByTeacher, deleteQuiz } from '../../../services/quizService';
 import { useAuthStore } from '../../../stores/authStore';
 import { useUIStore } from '../../../stores/uiStore';
@@ -22,9 +23,18 @@ export const Quizzes: React.FC = () => {
 
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm] = useState('');
+    const location = useLocation();
+    const [selectedClass, setSelectedClass] = useState<string>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'closed'>(() => {
+        const params = new URLSearchParams(location.search);
+        const statusParam = params.get('status');
+        if (statusParam === 'published' || statusParam === 'closed') {
+            return statusParam;
+        }
+        return 'all';
+    });
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [selectedClass, setSelectedClass] = useState<string>('');
+    const [quizToDelete, setQuizToDelete] = useState<{ id: string, title: string } | null>(null);
 
     useEffect(() => {
         loadQuizzes();
@@ -32,7 +42,7 @@ export const Quizzes: React.FC = () => {
 
     useEffect(() => {
         if (user?.assignedClasses?.length > 0) {
-            setSelectedClass(user.assignedClasses[0]);
+            setSelectedClass('all');
         }
     }, [user]);
 
@@ -44,33 +54,44 @@ export const Quizzes: React.FC = () => {
             const data = await getQuizzesByTeacher(user.id);
             setQuizzes(data);
         } catch (error) {
-            console.error('Error loading quizzes:', error);
-            addToast({ type: 'error', title: 'Hata', message: 'Quizler yüklenemedi.' });
+            console.error('Error loading exams:', error);
+            addToast({ type: 'error', title: 'Hata', message: 'Sınavlar yüklenemedi.' });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleDelete = async (quizId: string) => {
-        if (!window.confirm('Bu quizi silmek istediğinize emin misiniz?')) return;
+    const handleDelete = (quizId: string) => {
+        const quiz = quizzes.find(q => q.id === quizId);
+        if (!quiz) return;
+        setQuizToDelete({ id: quizId, title: quiz.title });
+        setActiveMenuId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (!quizToDelete) return;
+        const quizId = quizToDelete.id;
 
         try {
             await deleteQuiz(quizId);
             setQuizzes(prev => prev.filter(q => q.id !== quizId));
-            addToast({ type: 'success', title: 'Başarılı', message: 'Quiz silindi.' });
+            addToast({ type: 'success', title: 'Başarılı', message: 'Sınav silindi.' });
         } catch (error) {
-            console.error('Error deleting quiz:', error);
-            addToast({ type: 'error', title: 'Hata', message: 'Quiz silinemedi.' });
+            console.error('Error deleting exam:', error);
+            addToast({ type: 'error', title: 'Hata', message: 'Sınav silinemedi.' });
+        } finally {
+            setQuizToDelete(null);
         }
-        setActiveMenuId(null);
     };
 
-    const filteredQuizzes = quizzes.filter(quiz =>
-        quiz.status === 'published' && (
-            quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+    const filteredQuizzes = quizzes.filter(quiz => {
+        const matchesClass = !selectedClass || selectedClass === 'all' || quiz.classId === selectedClass;
+        const matchesStatus = filterStatus === 'all'
+            ? (quiz.status === 'published' || quiz.status === 'closed')
+            : quiz.status === filterStatus;
+
+        return matchesClass && matchesStatus;
+    });
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -85,7 +106,7 @@ export const Quizzes: React.FC = () => {
             <div className={styles.header}>
                 <div className={styles.headerTitle}>
                     <h1 className={styles.title}>Merhaba, {user?.displayName || 'Öğretmenim'}</h1>
-                    <p className={styles.subtitle}>Yayınladığınız quizleri ve sonuçlarını buradan takip edebilirsiniz.</p>
+                    <p className={styles.subtitle}>Yayınladığınız sınavları ve sonuçlarını buradan takip edebilirsiniz.</p>
                 </div>
 
                 <div className={styles.contextBar}>
@@ -102,22 +123,28 @@ export const Quizzes: React.FC = () => {
                     <div className={styles.contextItem}>
                         <label className={styles.contextLabel}>AKTİF SINIF</label>
                         <Select
-                            options={user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || []}
+                            options={[
+                                { value: 'all', label: 'Tüm Sınıflar' },
+                                ...(user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || [])
+                            ]}
                             value={selectedClass}
                             onChange={(val) => setSelectedClass(val)}
                             placeholder="Sınıf Seçin"
                         />
                     </div>
 
-                    <Button
-                        variant="danger"
-                        size="md"
-                        leftIcon={<Radio size={20} className={styles.liveIcon} />}
-                        className={styles.liveRecordBtn}
-                        onClick={() => navigate(ROUTES.TEACHER.NEW_SESSION)}
-                    >
-                        Canlı Kayıt Başlat
-                    </Button>
+                    <div className={styles.contextItem}>
+                        <label className={styles.contextLabel}>DURUM FİLTRESİ</label>
+                        <Select
+                            options={[
+                                { value: 'all', label: 'Hepsi' },
+                                { value: 'published', label: 'Aktif Sınavlar' },
+                                { value: 'closed', label: 'Sonuçlanan Sınavlar' },
+                            ]}
+                            value={filterStatus}
+                            onChange={(val) => setFilterStatus(val as any)}
+                        />
+                    </div>
 
                 </div>
             </div>
@@ -132,8 +159,8 @@ export const Quizzes: React.FC = () => {
                     <div style={{ color: 'var(--color-text-tertiary)', marginBottom: '16px' }}>
                         <FileText size={48} strokeWidth={1} />
                     </div>
-                    <h3>Yayında hiç quiz yok</h3>
-                    <p>Tamamlanan ve yayınlanan quizleriniz burada görünür.</p>
+                    <h3>Yayında hiç sınav yok</h3>
+                    <p>Tamamlanan ve yayınlanan sınavlarınız burada görünür.</p>
                 </div>
             ) : (
                 <div className={styles.quizList}>
@@ -144,7 +171,7 @@ export const Quizzes: React.FC = () => {
                             onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}`)}
                         >
                             <div className={styles.quizIcon}>
-                                <FileText size={20} />
+                                {quiz.status === 'published' ? <Zap size={20} /> : <CheckCircle size={20} />}
                             </div>
 
                             <div className={styles.quizInfo}>
@@ -163,9 +190,26 @@ export const Quizzes: React.FC = () => {
                                     <span>{quiz.questions?.length || 0} Soru</span>
                                 </div>
                                 <div className={styles.statusWrapper}>
-                                    <span className={`${styles.badge} ${styles.badgePublished}`}>
-                                        Yayında
-                                    </span>
+                                    {quiz.status === 'draft' && (
+                                        <span className={`${styles.badge} ${styles.badgeDraft}`}>
+                                            Onay Bekliyor
+                                        </span>
+                                    )}
+                                    {quiz.status === 'approved' && (
+                                        <span className={`${styles.badge} ${styles.badgeApproved}`}>
+                                            Yayına Hazır
+                                        </span>
+                                    )}
+                                    {quiz.status === 'published' && (
+                                        <span className={`${styles.badge} ${styles.badgePublished}`}>
+                                            Yayınlandı
+                                        </span>
+                                    )}
+                                    {quiz.status === 'closed' && (
+                                        <span className={`${styles.badge} ${styles.badgeDefault}`}>
+                                            Tamamlandı
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -191,9 +235,6 @@ export const Quizzes: React.FC = () => {
                                                 <button className={styles.menuItem} onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}`)}>
                                                     Düzenle
                                                 </button>
-                                                <button className={styles.menuItem} onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}/results`)}>
-                                                    Sonuçlar
-                                                </button>
                                                 <button
                                                     className={`${styles.menuItem} ${styles.menuItemDanger}`}
                                                     onClick={() => handleDelete(quiz.id)}
@@ -209,6 +250,16 @@ export const Quizzes: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={!!quizToDelete}
+                onClose={() => setQuizToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Sınavı Sil"
+                message={`"${quizToDelete?.title}" isimli sınavı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                confirmText="Sınavı Sil"
+                isLoading={isLoading}
+            />
         </div>
     );
 };

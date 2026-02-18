@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Mic, MoreVertical, School, Radio, FileText } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Mic, MoreVertical, School, FileText, Wand2, ClipboardCheck, Zap, CheckCircle, ArrowRight } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { deleteSession } from '../../../services/sessionService';
 import { useAuthStore } from '../../../stores/authStore';
 import { getTeacherSessions } from '../../../services/sessionService';
 import { getQuizzesByTeacher, deleteQuiz } from '../../../services/quizService';
-import { Button, Loader, Select } from '../../../components/common';
+import { Button, Loader, Select, ConfirmModal } from '../../../components/common';
 import { ROUTES } from '../../../config/routes';
 import type { Session, Teacher } from '../../../types';
 import type { Quiz } from '../../../types/quiz';
@@ -16,10 +16,11 @@ import styles from './Sessions.module.css';
 const statusLabels: Record<string, string> = {
     recorded: 'Kayıtlı', // Blue
     transcribing: 'Yazıya Dökülüyor...',
-    transcribed: 'Yazıya Döküldü', // Purple - AI Analysis Done
+    transcribed: 'Analiz Edildi', // Purple - AI Analysis Done
     processing: 'İşleniyor...',
-    draft: 'Sorular Onaylandı', // Orange - Quiz Draft
-    published: 'Yayında', // Green - Quiz Published
+    draft: 'Onay Bekliyor', // Purple/Blue - Waiting for approval
+    approved: 'Yayına Hazır', // Orange - Approved, ready to publish
+    published: 'Yayınlandı', // Green - Quiz Published
     assignment_generated: 'Ödev Oluşturuldu',
     completed: 'Tamamlandı',
 };
@@ -41,8 +42,9 @@ const formatDate = (timestamp: any): string => {
 const getStatusBadgeClass = (status: string) => {
     switch (status) {
         case 'recorded': return styles.badgeRecorded; // Blue
-        case 'transcribed': return styles.badgeTranscribed; // Purple
-        case 'draft': return styles.badgeDraft; // Orange (Sorular Onaylandı)
+        case 'transcribed': return styles.badgeTranscribed; // Teal (Analiz Tamam)
+        case 'draft': return styles.badgeDraft; // Purple (Onay Bekliyor)
+        case 'approved': return styles.badgeApproved; // Orange (Yayına Hazır)
         case 'published': return styles.badgePublished; // Green
         case 'processing':
         case 'transcribing': return styles.badgeProcessing; // Gray/Loading
@@ -55,13 +57,14 @@ const getItemStatusClass = (status: string) => {
         case 'recorded': return styles.itemRecorded;
         case 'transcribed': return styles.itemTranscribed;
         case 'draft': return styles.itemDraft;
+        case 'approved': return styles.itemApproved;
         case 'published': return styles.itemPublished;
         default: return '';
     }
 };
 
 
-type StatusFilter = 'all' | 'recorded' | 'transcribed' | 'draft' | 'published';
+type StatusFilter = 'all' | 'recorded' | 'transcribed' | 'draft' | 'approved' | 'published';
 
 export const Sessions: React.FC = () => {
     const navigate = useNavigate();
@@ -74,13 +77,26 @@ export const Sessions: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery] = useState('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [selectedClass, setSelectedClass] = useState<string>('');
+    const location = useLocation();
+    const [selectedClass, setSelectedClass] = useState<string>('all'); // Set default to 'all'
     const [isClassModalOpen, setIsClassModalOpen] = useState(false);
     const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
+    const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'session' | 'quiz', title: string } | null>(null);
+
+    // Sync filter status with URL params
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const statusParam = params.get('status');
+        if (statusParam && ['recorded', 'transcribed', 'draft', 'approved'].includes(statusParam)) {
+            setFilterStatus(statusParam as StatusFilter);
+        } else {
+            setFilterStatus('all');
+        }
+    }, [location.search]);
 
     useEffect(() => {
         if (user?.assignedClasses?.length > 0) {
-            setSelectedClass(user.assignedClasses[0]);
+            setSelectedClass('all');
         }
     }, [user]);
 
@@ -143,38 +159,57 @@ export const Sessions: React.FC = () => {
     });
 
     const filteredItems = combinedItems.filter(item => {
-        // Only show sessions and UNPUBLISHED quizzes in AI Analiz
+        // 1. Sadece yayınlanmamış quizleri ve seansları Üretim Atölyesi'nde göster
         if (item.type === 'quiz' && item.status === 'published') {
             return false;
         }
+
+        // 2. Mükerrerliği önle: Eğer bu SEANS (session) için zaten bir SINAV (quiz) oluşturulmuşsa,
+        // seansın "Analiz Edildi" satırını gizle, sadece sınavın "Onay Bekliyor" satırını göster.
+        if (item.type === 'session' && item.status === 'transcribed') {
+            const hasAssociatedQuiz = quizzes.some(q => q.sessionId === item.id);
+            if (hasAssociatedQuiz) return false;
+        }
+
+        // Class Filter
+        const matchesClass = !selectedClass || selectedClass === 'all' || item.classId === selectedClass;
 
         // Search Filter
         const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (item.type === 'session' && item.subject?.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (item.type === 'quiz' && item.subject?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        if (!matchesSearch) return false;
+        if (!matchesSearch || !matchesClass) return false;
 
         // Status Filter
         if (filterStatus === 'all') return true;
         if (filterStatus === 'recorded') return item.status === 'recorded';
-        if (filterStatus === 'transcribed') return item.status === 'transcribed';
-        if (filterStatus === 'draft') return item.status === 'draft';
+        if (filterStatus === 'draft') return item.status === 'draft' || item.status === 'transcribed';
+        if (filterStatus === 'approved') return item.status === 'approved';
         if (filterStatus === 'published') return item.status === 'published';
 
         return true;
     });
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         const item = combinedItems.find(i => i.id === id);
         if (!item) return;
 
-        const typeLabel = item.type === 'session' ? 'analizi' : 'quizi';
-        if (!window.confirm(`Bu ${typeLabel} ve ilişkili tüm verileri silmek istediğinize emin misiniz?`)) return;
+        setItemToDelete({
+            id: item.id,
+            type: item.type,
+            title: item.title
+        });
+        setActiveMenuId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+        const { id, type } = itemToDelete;
 
         try {
-            if (item.type === 'session') {
+            if (type === 'session') {
                 await deleteSession(id);
                 setSessions(prev => prev.filter(s => s.id !== id));
             } else {
@@ -183,10 +218,10 @@ export const Sessions: React.FC = () => {
             }
             addToast({ type: 'success', title: 'Başarılı', message: 'Silme işlemi tamamlandı.' });
         } catch (error) {
-            console.error('Error deleting:', error);
             addToast({ type: 'error', title: 'Hata', message: 'Silme işlemi başarısız oldu.' });
+        } finally {
+            setItemToDelete(null);
         }
-        setActiveMenuId(null);
     };
 
     // Close menu when clicking outside
@@ -216,13 +251,26 @@ export const Sessions: React.FC = () => {
                     </div>
 
                     <div className={styles.contextItem}>
+                        <label className={styles.contextLabel}>AKTİF SINIF</label>
+                        <Select
+                            options={[
+                                { value: 'all', label: 'Tüm Sınıflar' },
+                                ...(user?.assignedClasses?.map((cls: string) => ({ value: cls, label: cls })) || [])
+                            ]}
+                            value={selectedClass}
+                            onChange={(val) => setSelectedClass(val)}
+                            placeholder="Sınıf Seçin"
+                        />
+                    </div>
+
+                    <div className={styles.contextItem}>
                         <label className={styles.contextLabel}>DURUM FİLTRESİ</label>
                         <Select
                             options={[
                                 { value: 'all', label: 'Hepsi' },
                                 { value: 'recorded', label: 'Kayıtlı' },
-                                { value: 'transcribed', label: 'Yazıya Döküldü' },
-                                { value: 'draft', label: 'Sorular Onaylandı' },
+                                { value: 'draft', label: 'Onay Bekliyor' },
+                                { value: 'approved', label: 'Yayına Hazır' },
                             ]}
                             value={filterStatus}
                             onChange={(val) => setFilterStatus(val as StatusFilter)}
@@ -230,153 +278,176 @@ export const Sessions: React.FC = () => {
                         />
                     </div>
 
-                    <div className={styles.contextItem}>
-                        <label className={styles.contextLabel}>AKTİF SINIF</label>
-                        <Select
-                            options={user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || []}
-                            value={selectedClass}
-                            onChange={(val) => setSelectedClass(val)}
-                            placeholder="Sınıf Seçin"
-                        />
-                    </div>
 
 
-
-                    <Button
-                        variant="danger"
-                        size="md"
-                        leftIcon={<Radio size={20} className={styles.liveIcon} />}
-                        className={styles.liveRecordBtn}
-                        onClick={() => navigate(ROUTES.TEACHER.NEW_SESSION)}
-                    >
-                        Canlı Kayıt Başlat
-                    </Button>
                 </div>
             </div>
 
             {/* List */}
-            {isLoading ? (
-                <div className={styles.emptyState}>
-                    <Loader size="lg" />
-                </div>
-            ) : filteredItems.length === 0 ? (
-                <div className={styles.emptyState}>
-                    <div style={{ color: 'var(--color-text-tertiary)', marginBottom: '16px' }}>
-                        <Mic size={48} strokeWidth={1} />
+            {
+                isLoading ? (
+                    <div className={styles.emptyState}>
+                        <Loader size="lg" />
                     </div>
-                    <h3>Henüz bir aktivite yok</h3>
-                    <p>Yeni bir ders kaydı başlatarak veya quiz oluşturarak başlayabilirsiniz.</p>
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
-                        <Button
-                            variant="primary"
-                            onClick={() => navigate(ROUTES.TEACHER.NEW_SESSION)}
-                            leftIcon={<Plus size={20} />}
-                        >
-                            Yeni Kayıt
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate(ROUTES.TEACHER.NEW_QUIZ)}
-                            leftIcon={<FileText size={20} />}
-                        >
-                            Yeni Quiz
-                        </Button>
+                ) : filteredItems.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <div style={{ color: 'var(--color-text-tertiary)', marginBottom: '16px' }}>
+                            <Mic size={48} strokeWidth={1} />
+                        </div>
+                        <h3>Henüz bir aktivite yok</h3>
+                        <p>Yeni bir ders kaydı başlatarak veya sınav oluşturarak başlayabilirsiniz.</p>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate(ROUTES.TEACHER.NEW_SESSION)}
+                                leftIcon={<Mic size={20} />}
+                            >
+                                Yeni Kayıt
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            ) : (
-                <div className={styles.sessionsList}>
-                    {filteredItems.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`${item.type === 'quiz' ? styles.quizItem : styles.sessionItem} ${getItemStatusClass(item.status)}`}
-                            onClick={() => navigate(item.type === 'quiz' ? `${ROUTES.TEACHER.QUIZZES}/${item.id}` : `${ROUTES.TEACHER.SESSIONS}/${item.id}`)}
-                        >
-                            <div className={item.type === 'quiz' ? styles.quizIcon : styles.sessionIcon} data-icon-wrapper>
-                                {item.type === 'quiz' ? <FileText size={20} /> : <Mic size={20} className={styles.icon} />}
-                            </div>
-
-                            <div className={styles.sessionInfo}>
-                                <div className={styles.sessionTitle}>
-                                    {item.title.includes('-') ? item.title.split('-').slice(1).join('-').trim() : item.title}
-                                </div>
-                                <div className={styles.sessionMeta}>
-                                    {item.type === 'session' ? (
-                                        <>
-                                            <span>{item.subject || (item.title.includes('-') ? item.title.split('-')[0].trim() : 'Genel')}</span>
-                                            <span> • </span>
-                                            <span>{formatDate(item.createdAt)}</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>{item.subject || (item.title.includes('-') ? item.title.split('-')[0].trim() : 'Genel')}</span>
-                                            <span> • </span>
-                                            <span>{formatDate(item.createdAt)}</span>
-                                            <span> • </span>
-                                            <span>{item.questions?.length || 0} Soru</span>
-                                        </>
+                ) : (
+                    <div className={styles.sessionsList}>
+                        {filteredItems.map((item) => (
+                            <div
+                                key={item.id}
+                                className={`${item.type === 'quiz' ? styles.quizItem : styles.sessionItem} ${getItemStatusClass(item.status)}`}
+                                onClick={() => navigate(item.type === 'quiz' ? `${ROUTES.TEACHER.QUIZZES}/${item.id}` : `${ROUTES.TEACHER.SESSIONS}/${item.id}`)}
+                            >
+                                <div className={item.type === 'quiz' ? styles.quizIcon : styles.sessionIcon} data-icon-wrapper>
+                                    {item.status === 'recorded' && <Mic size={20} className={styles.icon} />}
+                                    {item.status === 'transcribed' && <Wand2 size={20} className={styles.icon} />}
+                                    {item.status === 'draft' && <ClipboardCheck size={20} className={styles.icon} />}
+                                    {item.status === 'approved' && <CheckCircle size={20} className={styles.icon} />}
+                                    {item.status === 'published' && <Zap size={20} className={styles.icon} />}
+                                    {!['recorded', 'transcribed', 'draft', 'approved', 'published'].includes(item.status) && (
+                                        item.type === 'quiz' ? <FileText size={20} /> : <Mic size={20} className={styles.icon} />
                                     )}
                                 </div>
-                                <div className={styles.statusWrapper}>
-                                    {item.type === 'session' ? (
+
+                                <div className={styles.sessionInfo}>
+                                    <div className={styles.sessionTitle}>
+                                        {item.title.includes('-') ? item.title.split('-').slice(1).join('-').trim() : item.title}
+                                    </div>
+                                    <div className={styles.sessionMeta}>
+                                        {item.type === 'session' ? (
+                                            <>
+                                                <span>{item.subject || (item.title.includes('-') ? item.title.split('-')[0].trim() : 'Genel')}</span>
+                                                <span> • </span>
+                                                <span>{formatDate(item.createdAt)}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>{item.subject || (item.title.includes('-') ? item.title.split('-')[0].trim() : 'Genel')}</span>
+                                                <span> • </span>
+                                                <span>{formatDate(item.createdAt)}</span>
+                                                <span> • </span>
+                                                <span>{item.questions?.length || 0} Soru</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className={styles.statusWrapper}>
                                         <span className={`${styles.badge} ${getStatusBadgeClass(item.status)}`}>
                                             {statusLabels[item.status]}
                                         </span>
-                                    ) : (
-                                        item.status === 'published' ? (
-                                            <span className={`${styles.badge} ${styles.badgeCompleted}`}>
-                                                Yayında
-                                            </span>
-                                        ) : (
-                                            <span className={`${styles.badge} ${styles.badgeDraft}`}>
-                                                Sorular Onaylandı
-                                            </span>
-                                        )
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className={styles.sessionRight}>
-                                <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
-                                    <button
-                                        className={styles.menuBtn}
-                                        onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
-                                    >
-                                        <MoreVertical size={20} />
-                                    </button>
+                                <div className={styles.sessionRight}>
+                                    {/* Factory Line Action Button */}
+                                    {item.status === 'transcribed' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={styles.actionBtnTranscribed}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`${ROUTES.TEACHER.SESSIONS}/${item.id}`);
+                                            }}
+                                            rightIcon={<ArrowRight size={16} />}
+                                        >
+                                            İncele
+                                        </Button>
+                                    )}
+                                    {item.status === 'draft' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={styles.actionBtnPrimary}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`${ROUTES.TEACHER.QUIZZES}/${item.id}`);
+                                            }}
+                                            rightIcon={<ArrowRight size={16} />}
+                                        >
+                                            Onayla
+                                        </Button>
+                                    )}
+                                    {item.status === 'approved' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={styles.actionBtnSuccess}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`${ROUTES.TEACHER.QUIZZES}/${item.id}`);
+                                            }}
+                                            rightIcon={<ArrowRight size={16} />}
+                                        >
+                                            Yayınla
+                                        </Button>
+                                    )}
+                                    {item.status === 'published' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={styles.actionBtnGhost}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`${ROUTES.TEACHER.QUIZZES}/${item.id}/results`);
+                                            }}
+                                        >
+                                            Sonuçlar
+                                        </Button>
+                                    )}
 
-                                    {activeMenuId === item.id && (
-                                        <>
-                                            <div
-                                                style={{ position: 'fixed', inset: 0, zIndex: 99 }}
-                                                onClick={() => setActiveMenuId(null)}
-                                            />
-                                            <div className={styles.menuDropdown}>
-                                                <button
-                                                    className={styles.menuItem}
-                                                    onClick={() => navigate(item.type === 'quiz' ? `${ROUTES.TEACHER.QUIZZES}/${item.id}` : `${ROUTES.TEACHER.SESSIONS}/${item.id}`)}
-                                                >
-                                                    {item.type === 'quiz' ? 'Düzenle' : 'Görüntüle'}
-                                                </button>
-                                                {item.type === 'quiz' && (
-                                                    <button className={styles.menuItem} onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${item.id}/results`)}>
-                                                        Sonuçlar
+                                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                                        <button
+                                            className={styles.menuBtn}
+                                            onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
+                                        >
+                                            <MoreVertical size={20} />
+                                        </button>
+
+                                        {activeMenuId === item.id && (
+                                            <>
+                                                <div
+                                                    style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                                                    onClick={() => setActiveMenuId(null)}
+                                                />
+                                                <div className={styles.menuDropdown}>
+                                                    <button
+                                                        className={styles.menuItem}
+                                                        onClick={() => navigate(item.type === 'quiz' ? `${ROUTES.TEACHER.QUIZZES}/${item.id}` : `${ROUTES.TEACHER.SESSIONS}/${item.id}`)}
+                                                    >
+                                                        {item.type === 'quiz' ? 'Düzenle' : 'Görüntüle'}
                                                     </button>
-                                                )}
-                                                <button
-                                                    className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                                    onClick={(e) => handleDelete(e, item.id)}
-                                                >
-                                                    Sil
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
+                                                    <button
+                                                        className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                                        onClick={(e) => handleDelete(e, item.id)}
+                                                    >
+                                                        Sil
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )
+            }
 
             <ClassManagementModal
                 isOpen={isClassModalOpen}
@@ -386,6 +457,16 @@ export const Sessions: React.FC = () => {
                 onAddClass={handleAddClass}
                 onDeleteClass={handleDeleteClass}
                 onUpdateClass={handleUpdateClass}
+            />
+
+            <ConfirmModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title={itemToDelete?.type === 'session' ? 'Analizi Sil' : 'Sınavı Sil'}
+                message={`${itemToDelete?.title} ${itemToDelete?.type === 'session' ? 'analizini' : 'sınavını'} ve tüm verilerini silmek istediğinize emin misiniz?`}
+                confirmText="Sil"
+                isLoading={isLoading}
             />
         </div >
     );

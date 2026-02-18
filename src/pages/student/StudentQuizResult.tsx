@@ -58,18 +58,6 @@ export const StudentQuizResult: React.FC = () => {
                 return qa.selectedOptionIds?.[0];
             case 'true_false':
                 return qa.booleanAnswer;
-            case 'open_ended':
-                return qa.textAnswer;
-            case 'matching':
-                return qa.matchedPairs?.reduce((acc: any, p) => {
-                    acc[p.leftId] = p.rightId;
-                    return acc;
-                }, {});
-            case 'fill_blank':
-                return qa.blankAnswers?.reduce((acc: any, b) => {
-                    acc[b.blankId] = b.answer;
-                    return acc;
-                }, {});
             default:
                 return null;
         }

@@ -1,9 +1,10 @@
-/* QuestionEditor — Vibrant Redesign matching Image */
+/* QuestionEditor — Ultra Premium Design */
 
 .editor {
     display: flex;
     flex-direction: column;
     gap: 32px;
+    position: relative;
 }
 
 .field {
@@ -20,157 +21,129 @@
 
 .label {
     font-size: 11px;
-    font-weight: 800;
-    color: #9CA3AF;
+    font-weight: 900;
+    color: var(--color-gray-400);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.12em;
 }
 
+/* AI Button — Cosmic Gradient */
 .aiImproveBtn {
-    background: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
+    background: linear-gradient(135deg, #8B5CF6 0%, #d946ef 100%) !important;
     color: white !important;
     border: none !important;
     padding: 8px 16px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-size: 11px !important;
     font-weight: 800 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
+    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.aiImproveBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(139, 92, 246, 0.3) !important;
 }
 
 .aiInputArea {
     margin-bottom: 8px;
-    animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    background: #FDFCFE;
+    border: 1px solid rgba(139, 92, 246, 0.1);
+    border-radius: 16px;
+    padding: 12px;
 }
 
 .questionInput {
     width: 100%;
-    padding: 24px;
-    border: none;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
-    background-color: #F9FAFB;
+    padding: 20px 24px;
+    border: 1.5px solid var(--color-gray-100);
+    border-radius: 24px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    background: white;
     resize: none;
     outline: none;
-    line-height: 1.6;
-    transition: background-color 0.2s;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+    letter-spacing: -0.01em;
 }
 
 .questionInput:focus {
-    background-color: #F3F4F6;
+    border-color: var(--color-primary-light);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.05);
+    background: white;
 }
 
-.typeEditor {
-    margin-top: 8px;
-}
-
-/* Common Settings Row */
-.settingsRow {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-}
-
-.settingItem {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.miniLabel {
-    font-size: 11px;
-    font-weight: 800;
-    color: #9CA3AF;
-    text-transform: uppercase;
-}
-
-.miniInput {
-    background-color: #F9FAFB !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 8px 16px !important;
-    font-weight: 700 !important;
-    color: #111827 !important;
-    font-size: 14px !important;
-    width: 80px !important;
-}
-
-.miniSelect {
-    background-color: #F9FAFB;
+.readOnly .questionInput {
     border: none;
-    border-radius: 12px;
-    padding: 8px 32px 8px 16px;
-    font-weight: 700;
-    color: #111827;
-    font-size: 14px;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
+    background: transparent;
+    padding: 0;
+    font-size: 20px;
 }
 
-/* Colored Note Boxes */
 .noteBox {
-    padding: 24px;
-    border-radius: 16px;
+    background: #F9FAFB;
+    border: 1.5px solid var(--color-gray-50);
+    padding: 20px 24px;
+    border-radius: 24px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 .noteBox.purple {
-    background-color: #F5F3FF;
-}
-
-.noteBox.purple .label {
-    color: #8B5CF6;
-}
-
-.noteBox.amber {
-    background-color: #FFFBEB;
-}
-
-.noteBox.amber .label {
-    color: #D97706;
+    background: #F5F3FF;
+    border-color: #EDE9FE;
 }
 
 .noteTextarea {
     width: 100%;
-    background-color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 16px;
+    border: 1.5px solid var(--color-gray-100);
+    border-radius: 16px;
+    padding: 14px 18px;
     font-size: 14px;
-    font-style: italic;
-    color: #4B5563;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: white;
     resize: none;
     outline: none;
-    line-height: 1.6;
+    transition: all 0.2s;
 }
 
-.noteInput {
-    width: 100%;
-    background-color: white;
+.noteTextarea:focus {
+    border-color: var(--color-primary-light);
+}
+
+.readOnly .noteTextarea {
     border: none;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 14px;
-    color: #4B5563;
-    outline: none;
+    background: transparent;
+    padding: 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .editor {
+        gap: 20px;
+    }
+
+    .questionInput {
+        padding: 14px 16px;
+        font-size: 15px;
+        border-radius: 16px;
+    }
+
+    .noteBox {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .noteTextarea {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .label {
+        font-size: 10px;
+    }
 }

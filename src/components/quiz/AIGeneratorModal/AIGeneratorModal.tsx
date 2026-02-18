@@ -31,8 +31,6 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({
     const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([
         QUESTION_TYPES.MULTIPLE_CHOICE,
         QUESTION_TYPES.TRUE_FALSE,
-        QUESTION_TYPES.OPEN_ENDED,
-        QUESTION_TYPES.FILL_BLANK,
     ]);
 
     const handleToggleType = (type: QuestionType) => {

@@ -142,9 +142,6 @@ export const uploadSessionAudio = async (
                     case 'storage/canceled':
                         errorMessage = 'Yükleme iptal edildi.';
                         break;
-                    case 'storage/unknown':
-                        errorMessage = 'Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.';
-                        break;
                     case 'storage/retry-limit-exceeded':
                         errorMessage = 'İnternet bağlantısı çok zayıf. Lütfen bağlantınızı kontrol edip tekrar deneyin.';
                         break;
@@ -153,10 +150,10 @@ export const uploadSessionAudio = async (
                         break;
                     case 'storage/unauthenticated':
                     case 'storage/unauthorized':
-                        errorMessage = 'Yetkilendirme hatası. Lütfen tekrar giriş yapın.';
+                        errorMessage = 'Yetkilendirme hatası. Lütfen tekrar giriş yapın (Storage izin hatası).';
                         break;
                     default:
-                        errorMessage = `Yükleme başarısız: ${error.message}`;
+                        errorMessage = `Yükleme başarısız (Hata Kodu: ${error.code}): ${error.message}`;
                 }
 
                 onProgress?.({

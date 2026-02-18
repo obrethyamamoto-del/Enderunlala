@@ -94,6 +94,7 @@
     flex-direction: column;
     gap: 8px;
     flex: 1;
+    min-width: 200px;
 }
 
 .contextLabel {
@@ -208,63 +209,44 @@
 
 .quizItem {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
-    border-radius: 20px;
-    background-color: var(--color-bg-secondary);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    align-items: center;
+    gap: 24px;
+    padding: 24px 32px;
+    border-radius: 28px;
+    background-color: white;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-gray-100);
     width: 100%;
-}
-
-@media (min-width: 640px) {
-    .quizItem {
-        flex-direction: row;
-        align-items: center;
-        gap: 24px;
-        padding: 20px 28px;
-        border-radius: 24px;
-    }
-}
-
-@media (min-width: 640px) {
-    .quizItem {
-        align-items: center;
-        gap: 24px;
-        padding: 20px 28px;
-    }
-}
-
-/* Row Coloring */
-/* Consistent Status Backgrounds */
-.itemPublished {
-    background-color: white !important;
-}
-
-.itemPublished .quizIcon {
-    background-color: #ecfdf5;
-    color: #10b981;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .quizItem:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
     border-color: var(--color-primary-light);
 }
 
 /* Icons */
 .quizIcon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background-color: var(--color-bg-tertiary);
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.itemPublished .quizIcon {
+    background: #F0FDF4;
+    color: #10B981;
+}
+
+.quizItem:hover .quizIcon {
+    transform: rotate(-5deg) scale(1.1);
 }
 
 
@@ -336,10 +318,29 @@
 }
 
 .badgePublished {
-    background-color: #ecfdf5;
-    color: #059669;
-    border: 1px solid #d1fae5;
+    background-color: #F0FDF4;
+    color: #10B981;
+    border: 1px solid #DCFCE7;
 }
+
+.badgeDraft {
+    background-color: #F5F3FF;
+    color: #8B5CF6;
+    border: 1px solid #EDE9FE;
+}
+
+.badgeApproved {
+    background-color: #FFF7ED;
+    color: #F97316;
+    border: 1px solid #FFEDD5;
+}
+
+.badgeDefault {
+    background-color: #F8FAFC;
+    color: #64748B;
+    border: 1px solid #F1F5F9;
+}
+
 
 /* Menu */
 .menuBtn {
@@ -379,20 +380,21 @@
 .menuItem {
     width: 100%;
     text-align: left;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--color-text-secondary);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    display: block;
 }
 
 .menuItem:hover {
-    background-color: var(--color-gray-50);
-    color: var(--color-primary);
+    background-color: #F5F3FF !important;
+    color: var(--color-primary) !important;
 }
 
 .menuItemDanger {

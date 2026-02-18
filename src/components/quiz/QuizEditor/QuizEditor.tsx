@@ -1,36 +1,36 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     Plus,
     Trash2,
     GripVertical,
-    Copy,
-    ChevronDown,
-    ChevronUp,
-    Wand2,
+    ArrowUp,
+    ArrowDown,
     Save,
     Eye,
-    Settings,
-    List,
     Target,
     Clock,
     Send,
+    ChevronDown,
+    Sparkles,
+    Type,
+    Check,
 } from 'lucide-react';
-import { Button, Input } from '../../common';
+import { Button } from '../../common';
 import { QuestionEditor } from './QuestionEditor';
-import { AIGeneratorModal } from '../AIGeneratorModal';
-import { useUIStore } from '../../../stores/uiStore';
 import type {
     Quiz,
     Question,
     QuestionType,
 } from '../../../types/quiz';
 import {
+    QUESTION_TYPES,
     QUESTION_TYPE_LABELS,
     createEmptyQuestion,
     calculateTotalPoints,
     estimateQuizDuration,
-    generateQuestionId,
 } from '../../../types/quiz';
+import { generateQuizFromTopic } from '../../../services/aiService';
+import { useUIStore } from '../../../stores/uiStore';
 import styles from './QuizEditor.module.css';
 
 interface QuizEditorProps {
@@ -39,6 +39,7 @@ interface QuizEditorProps {
     onGenerateWithAI?: () => void;
     onPreview?: (quiz: Quiz) => void;
     onPublish?: () => void;
+    onApprove?: () => void;
     isLoading?: boolean;
     hideHeader?: boolean;
 }
@@ -46,24 +47,62 @@ interface QuizEditorProps {
 export const QuizEditor: React.FC<QuizEditorProps> = ({
     quiz: initialQuiz,
     onSave,
-    onGenerateWithAI,
     onPreview,
     onPublish,
+    onApprove,
     isLoading = false,
     hideHeader = false,
 }) => {
-    const [quiz, setQuiz] = useState<Quiz>(initialQuiz);
+    const [quiz, setQuiz] = useState<Quiz>(() => {
+        const supportedTypes = Object.values(QUESTION_TYPES) as string[];
+        return {
+            ...initialQuiz,
+            questions: initialQuiz.questions.filter(q => supportedTypes.includes(q.type))
+        };
+    });
     const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(
         quiz.questions[0]?.id || null
     );
     const [showAddMenu, setShowAddMenu] = useState(false);
-    const [hasChanges, setHasChanges] = useState(false);
-    const [isAIGenOpen, setIsAIGenOpen] = useState(false);
+    const [addMode, setAddMode] = useState<'decision' | 'manual' | 'ai'>('decision');
+    const [aiTopic, setAiTopic] = useState('');
+    const [aiQuestionType, setAiQuestionType] = useState<QuestionType>(QUESTION_TYPES.MULTIPLE_CHOICE);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    const [hasChanges, setHasChanges] = useState(false);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [isQuestionDraggingAllowed, setIsQuestionDraggingAllowed] = useState(false);
-    const { addToast } = useUIStore();
+    const addToast = useUIStore((state) => state.addToast);
+
+    const addMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close add menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
+                setShowAddMenu(false);
+                setAddMode('decision');
+            }
+        };
+
+        if (showAddMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showAddMenu]);
+
+    // Sync state when prop changes
+    React.useEffect(() => {
+        const supportedTypes = Object.values(QUESTION_TYPES) as string[];
+        setQuiz({
+            ...initialQuiz,
+            questions: initialQuiz.questions.filter(q => supportedTypes.includes(q.type))
+        });
+        setHasChanges(false); // Reset changes when a new state comes from parent (e.g. after save/approve)
+    }, [initialQuiz]);
 
     // Quiz meta güncelle
     const updateQuizMeta = useCallback((updates: Partial<Quiz>) => {
@@ -120,28 +159,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
         setHasChanges(true);
     }, []);
 
-    // Soru kopyala
-    const duplicateQuestion = useCallback((questionId: string) => {
-        const question = quiz.questions.find(q => q.id === questionId);
-        if (!question) return;
-
-        const newQuestion: Question = {
-            ...question,
-            id: generateQuestionId(),
-            order: quiz.questions.length,
-        };
-
-        setQuiz(prev => ({
-            ...prev,
-            questions: [...prev.questions, newQuestion],
-            totalPoints: calculateTotalPoints([...prev.questions, newQuestion]),
-            estimatedDuration: estimateQuizDuration([...prev.questions, newQuestion]),
-            updatedAt: new Date(),
-        }));
-        setExpandedQuestionId(newQuestion.id);
-        setHasChanges(true);
-    }, [quiz.questions]);
-
     // Sürükle-Bırak İşlemleri (Questions)
     const handleDragStart = (e: React.DragEvent, index: number) => {
         if (!isQuestionDraggingAllowed) {
@@ -195,8 +212,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
         setDragOverIndex(null);
     };
 
-
-
     // Soru sırasını değiştir
     const moveQuestion = useCallback((questionId: string, direction: 'up' | 'down') => {
         setQuiz(prev => {
@@ -218,50 +233,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
         setHasChanges(true);
     }, []);
 
-    // AI ile Soru Oluşturma
-    const handleAIGeneration = useCallback(async (params: {
-        topic: string;
-        count: number;
-        difficulty: 'easy' | 'medium' | 'hard';
-        questionTypes: QuestionType[];
-    }) => {
-        setIsGenerating(true);
-        try {
-            const { generateQuizFromTopic } = await import('../../../services/aiService');
-
-            const newQuestions = await generateQuizFromTopic({
-                topic: params.topic,
-                questionCount: params.count,
-                difficulty: params.difficulty,
-                questionTypes: params.questionTypes,
-            });
-
-            if (newQuestions.length > 0) {
-                setQuiz(prev => {
-                    const updatedQuestions = [...prev.questions, ...newQuestions];
-                    return {
-                        ...prev,
-                        questions: updatedQuestions,
-                        totalPoints: calculateTotalPoints(updatedQuestions),
-                        estimatedDuration: estimateQuizDuration(updatedQuestions),
-                        updatedAt: new Date(),
-                    };
-                });
-                setExpandedQuestionId(newQuestions[0].id);
-                setHasChanges(true);
-                setIsAIGenOpen(false);
-                addToast({ type: 'success', title: 'Başarılı', message: `${newQuestions.length} soru eklendi.` });
-            } else {
-                addToast({ type: 'warning', title: 'Uyarı', message: 'Soru üretilemedi.' });
-            }
-        } catch (error) {
-            console.error('AI Gen Error:', error);
-            addToast({ type: 'error', title: 'Hata', message: 'AI servisi ile iletişim kurulamadı.' });
-        } finally {
-            setIsGenerating(false);
-        }
-    }, [addToast]);
-
     // Kaydet
     const handleSave = useCallback(() => {
         onSave(quiz);
@@ -275,110 +246,149 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
         }
     }, [quiz, onPreview]);
 
+    // AI ile soru üret
+    const handleGenerateAI = async () => {
+        if (!aiTopic.trim()) {
+            addToast({ type: 'warning', title: 'Uyarı', message: 'Lütfen bir konu veya metin girin.' });
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const newQuestions = await generateQuizFromTopic({
+                topic: aiTopic,
+                questionCount: 1,
+                difficulty: 'medium',
+                questionTypes: [aiQuestionType],
+            });
+
+            if (newQuestions.length > 0) {
+                const question = newQuestions[0];
+                question.order = quiz.questions.length;
+
+                setQuiz(prev => ({
+                    ...prev,
+                    questions: [...prev.questions, question],
+                    totalPoints: calculateTotalPoints([...prev.questions, question]),
+                    estimatedDuration: estimateQuizDuration([...prev.questions, question]),
+                    updatedAt: new Date(),
+                }));
+                setExpandedQuestionId(question.id);
+                setAiTopic('');
+                setShowAddMenu(false);
+                setAddMode('decision');
+                setHasChanges(true);
+                addToast({ type: 'success', title: 'Başarılı', message: 'Soru AI tarafından üretildi.' });
+            }
+        } catch (error: any) {
+            console.error('AI error:', error);
+            addToast({
+                type: 'error',
+                title: 'Hata',
+                message: error.message || 'Soru üretilirken bir hata oluştu.'
+            });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const toggleAddMenu = () => {
+        setShowAddMenu(!showAddMenu);
+        setAddMode('decision');
+    };
 
     return (
         <div className={styles.editor}>
-            {/* Header and Description - Hidden if hideHeader is true */}
             {!hideHeader && (
-                <>
-                    <div className={styles.topHeader}>
-                        <div className={styles.titleInfo}>
-                            <div className={styles.titleWrapper}>
-                                <Input
-                                    value={quiz.title}
-                                    onChange={(e) => updateQuizMeta({ title: e.target.value })}
-                                    placeholder="Quiz Başlığı"
-                                    className={styles.titleInput}
-                                />
-                            </div>
-
-                            <div className={styles.metaRow}>
+                <div className={styles.stickyHeader}>
+                    <div className={styles.headerTop}>
+                        <div className={styles.titleArea}>
+                            <textarea
+                                value={quiz.title}
+                                onChange={(e) => updateQuizMeta({ title: e.target.value })}
+                                placeholder="Quiz Başlığı"
+                                className={styles.titleTextarea}
+                                readOnly={quiz.status === 'published' || quiz.status === 'closed'}
+                                rows={2}
+                            />
+                            <div className={styles.metaInfo}>
                                 <span className={`${styles.statusBadge} ${styles[quiz.status]}`}>
-                                    {quiz.status === 'draft' ? 'SORULAR ONAYLANDI' :
-                                        quiz.status === 'published' ? 'YAYINDA' :
-                                            quiz.status === 'closed' ? 'KAPALI' : 'ARŞİV'}
+                                    {quiz.status === 'draft' ? 'ONAY BEKLİYOR' :
+                                        quiz.status === 'approved' ? 'YAYINA HAZIR' :
+                                            quiz.status === 'published' ? 'YAYINLANDI' :
+                                                quiz.status === 'closed' ? 'KAPALI' : 'ARŞİV'}
                                 </span>
-                                <div className={styles.statsIcons}>
-                                    <span className={styles.statItem}><List size={14} /> {quiz.questions.length} Soru</span>
-                                    <span className={styles.separator}>•</span>
-                                    <span className={styles.statItem}><Target size={14} /> {quiz.totalPoints} Puan</span>
-                                    <span className={styles.separator}>•</span>
-                                    <span className={styles.statItem}><Clock size={14} /> ~{quiz.estimatedDuration} Dakika</span>
-                                </div>
+                                <span className={styles.dot}>•</span>
+                                <span className={styles.metaStat}><Target size={14} /> {quiz.totalPoints} Puan</span>
+                                <span className={styles.dot}>•</span>
+                                <span className={styles.metaStat}><Clock size={14} /> ~{quiz.estimatedDuration} dk</span>
                             </div>
                         </div>
 
-                        {onPublish && quiz.status === 'draft' && (
-                            <Button
-                                variant="primary"
-                                leftIcon={<Send size={18} />}
-                                onClick={onPublish}
-                                className={styles.publishMainBtn}
-                            >
-                                Yayınla
-                            </Button>
-                        )}
-                    </div>
-
-                    <div className={styles.actionsBar}>
-                        <div className={styles.leftActions}>
-                            {onGenerateWithAI && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    leftIcon={<Wand2 size={16} color="#8B5CF6" />}
-                                    onClick={() => setIsAIGenOpen(true)}
-                                    disabled={isLoading}
-                                    className={styles.whiteActionBtn}
-                                >
-                                    AI ile Oluştur
-                                </Button>
-                            )}
+                        <div className={styles.headerActions}>
                             <Button
                                 variant="outline"
-                                size="sm"
-                                leftIcon={<Eye size={16} />}
+                                size="md"
+                                leftIcon={<Eye size={18} />}
                                 onClick={handlePreview}
-                                disabled={isLoading}
-                                className={styles.whiteActionBtn}
+                                className={styles.previewBtn}
                             >
                                 Önizle
                             </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                leftIcon={<Settings size={16} />}
-                                className={styles.whiteActionBtn}
-                            >
-                                Ayarlar
-                            </Button>
-                        </div>
 
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            leftIcon={<Save size={16} />}
-                            onClick={handleSave}
-                            disabled={isLoading || !hasChanges}
-                            className={styles.saveBtn}
-                        >
-                            Kaydet
-                        </Button>
+                            {quiz.status !== 'published' && quiz.status !== 'closed' && (
+                                <Button
+                                    variant="primary"
+                                    size="md"
+                                    leftIcon={<Save size={18} />}
+                                    onClick={handleSave}
+                                    disabled={isLoading || !hasChanges}
+                                    className={styles.saveActionBtn}
+                                >
+                                    Kaydet
+                                </Button>
+                            )}
+
+                            {quiz.status === 'draft' && onApprove && (
+                                <Button
+                                    variant="primary"
+                                    size="md"
+                                    leftIcon={<Target size={18} />}
+                                    onClick={onApprove}
+                                    disabled={isLoading || hasChanges}
+                                    className={styles.workflowBtn}
+                                >
+                                    Onayla
+                                </Button>
+                            )}
+
+                            {quiz.status === 'approved' && onPublish && (
+                                <Button
+                                    variant="primary"
+                                    size="md"
+                                    leftIcon={<Send size={18} />}
+                                    onClick={onPublish}
+                                    disabled={isLoading || hasChanges}
+                                    className={styles.workflowBtnPrimary}
+                                >
+                                    Yayınla
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
-                    <div className={styles.descriptionCard}>
+                    <div className={styles.descriptionRow}>
                         <textarea
                             value={quiz.description || ''}
                             onChange={(e) => updateQuizMeta({ description: e.target.value })}
-                            placeholder="Dersle ilgili açıklama..."
-                            className={styles.descriptionTextarea}
-                            rows={2}
+                            placeholder="Öğrencileriniz için kısa bir açıklama veya yönerge girin..."
+                            className={styles.descTextarea}
+                            rows={1}
                         />
                     </div>
-                </>
+                </div>
             )}
 
-            {/* Questions List */}
             <div className={styles.questionsList}>
                 {quiz.questions.map((question, index) => (
                     <div
@@ -394,7 +404,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
                             ${dragOverIndex === index && draggedIndex !== index ? styles.dragOver : ''}
                         `}
                     >
-                        {/* Question Header */}
                         <div
                             className={styles.questionHeader}
                             onClick={() => setExpandedQuestionId(
@@ -402,66 +411,63 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
                             )}
                         >
                             <div className={styles.questionLeft}>
-                                <span
-                                    className={styles.dragHandle}
-                                    onMouseDown={() => setIsQuestionDraggingAllowed(true)}
-                                    onMouseUp={() => setIsQuestionDraggingAllowed(false)}
-                                    data-drag-handle="question"
-                                >
-                                    <GripVertical size={16} />
-                                </span>
-                                <span className={styles.questionNumber}>{index + 1}</span>
-                                <span className={`${styles.questionType} ${styles[question.type]}`}>
-                                    {QUESTION_TYPE_LABELS[question.type]}
-                                </span>
-                                <span className={styles.questionPreview}>
+                                {quiz.status !== 'published' && quiz.status !== 'closed' && (
+                                    <span
+                                        className={styles.dragHandle}
+                                        onMouseDown={() => setIsQuestionDraggingAllowed(true)}
+                                        onMouseUp={() => setIsQuestionDraggingAllowed(false)}
+                                    >
+                                        <GripVertical size={16} />
+                                    </span>
+                                )}
+                                <div className={styles.qIdentifier}>
+                                    <span className={styles.qNumber}>{index + 1}</span>
+                                    <span className={`${styles.qType} ${styles[question.type]}`}>
+                                        {QUESTION_TYPE_LABELS[question.type]}
+                                    </span>
+                                </div>
+                                <span className={styles.qTextPreview}>
                                     {question.question || 'Soru metni girilmedi...'}
                                 </span>
                             </div>
 
                             <div className={styles.questionRight}>
-                                <span className={styles.pointsBadge}>{question.points} puan</span>
-                                <div className={styles.questionActions}>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); moveQuestion(question.id, 'up'); }}
-                                        disabled={index === 0}
-                                        className={styles.iconButton}
-                                    >
-                                        <ChevronUp size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); moveQuestion(question.id, 'down'); }}
-                                        disabled={index === quiz.questions.length - 1}
-                                        className={styles.iconButton}
-                                    >
-                                        <ChevronDown size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); duplicateQuestion(question.id); }}
-                                        className={styles.iconButton}
-                                    >
-                                        <Copy size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); deleteQuestion(question.id); }}
-                                        className={`${styles.iconButton} ${styles.danger}`}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                {quiz.status !== 'published' && quiz.status !== 'closed' && (
+                                    <div className={styles.qActions}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); moveQuestion(question.id, 'up'); }}
+                                            disabled={index === 0}
+                                            className={styles.qActionBtn}
+                                        >
+                                            <ArrowUp size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); moveQuestion(question.id, 'down'); }}
+                                            disabled={index === quiz.questions.length - 1}
+                                            className={styles.qActionBtn}
+                                        >
+                                            <ArrowDown size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); deleteQuestion(question.id); }}
+                                            className={`${styles.qActionBtn} ${styles.delete}`}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className={`${styles.expandCircle} ${expandedQuestionId === question.id ? styles.active : ''}`}>
+                                    <ChevronDown size={18} />
                                 </div>
-                                <ChevronDown
-                                    size={20}
-                                    className={`${styles.expandIcon} ${expandedQuestionId === question.id ? styles.rotated : ''}`}
-                                />
                             </div>
                         </div>
 
-                        {/* Question Editor */}
                         {expandedQuestionId === question.id && (
                             <div className={styles.questionContent}>
                                 <QuestionEditor
                                     question={question}
                                     onChange={(updates) => updateQuestion(question.id, updates)}
+                                    readOnly={quiz.status === 'published' || quiz.status === 'closed'}
                                 />
                             </div>
                         )}
@@ -469,46 +475,116 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
                 ))}
             </div>
 
-            {/* Add Question Button */}
-            <div className={styles.addSection}>
-                <div className={styles.addButtonWrapper}>
-                    <Button
-                        variant="outline"
-                        leftIcon={
-                            <div className={styles.plusIconCircle}>
-                                <Plus size={18} />
+            {quiz.status !== 'published' && quiz.status !== 'closed' && (
+                <div className={styles.addSection}>
+                    <div className={styles.addBtnContainer} ref={addMenuRef}>
+                        <Button
+                            variant="outline"
+                            leftIcon={<Plus size={20} />}
+                            onClick={toggleAddMenu}
+                            className={styles.mainAddBtn}
+                        >
+                            Yeni Soru Ekle
+                        </Button>
+
+                        {showAddMenu && (
+                            <div className={styles.typeMenu}>
+                                {addMode === 'decision' && (
+                                    <div className={styles.decisionMenu}>
+                                        <button
+                                            className={styles.decisionItem}
+                                            onClick={() => setAddMode('manual')}
+                                        >
+                                            <div className={styles.decisionIcon}><Type size={20} /></div>
+                                            <div className={styles.decisionText}>
+                                                <strong>Manuel Soru</strong>
+                                                <span>Kendiniz yazın ve özelleştirin</span>
+                                            </div>
+                                        </button>
+                                        <button
+                                            className={styles.decisionItem}
+                                            onClick={() => setAddMode('ai')}
+                                        >
+                                            <div className={`${styles.decisionIcon} ${styles.aiIcon}`}><Sparkles size={20} /></div>
+                                            <div className={styles.decisionText}>
+                                                <strong>AI ile Üret</strong>
+                                                <span>Konu verin, GPT soruyu hazırlasın</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {addMode === 'manual' && (
+                                    <div className={styles.manualMenu}>
+                                        <div className={styles.menuHeader}>
+                                            <button onClick={() => setAddMode('decision')} className={styles.backBtn}>← Geri</button>
+                                            <span>Soru Tipi Seçin</span>
+                                        </div>
+                                        {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
+                                            <button
+                                                key={type}
+                                                className={styles.typeMenuItem}
+                                                onClick={() => addQuestion(type as QuestionType)}
+                                            >
+                                                <span className={`${styles.typeDot} ${styles[type]}`} />
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {addMode === 'ai' && (
+                                    <div className={styles.aiMenu}>
+                                        <div className={styles.menuHeader}>
+                                            <button onClick={() => setAddMode('decision')} className={styles.backBtn}>← Geri</button>
+                                            <span>AI Soru Üretici</span>
+                                        </div>
+                                        <div className={styles.aiInputWrapper}>
+                                            <div className={styles.aiTypeSelector}>
+                                                <label className={styles.aiLabel}>Soru Tipi Seçin:</label>
+                                                <div className={styles.aiTypeList}>
+                                                    {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
+                                                        <button
+                                                            key={type}
+                                                            type="button"
+                                                            className={`${styles.typeMenuItem} ${aiQuestionType === type ? styles.typeMenuItemActive : ''}`}
+                                                            onClick={() => setAiQuestionType(type as QuestionType)}
+                                                        >
+                                                            <span className={`${styles.typeDot} ${styles[type]}`} />
+                                                            <span style={{ flex: 1 }}>{label}</span>
+                                                            {aiQuestionType === type && <Check size={16} style={{ color: 'var(--color-primary)' }} />}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <textarea
+                                                value={aiTopic}
+                                                onChange={(e) => setAiTopic(e.target.value)}
+                                                placeholder="Soru ne hakkında olsun? (örn: 'Fotosentez evreleri bloğu')"
+                                                className={styles.aiTopicInput}
+                                                rows={3}
+                                            />
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                fullWidth
+                                                leftIcon={<Sparkles size={16} />}
+                                                onClick={handleGenerateAI}
+                                                isLoading={isGenerating}
+                                                disabled={isGenerating}
+                                                className={styles.aiGenerateBtn}
+                                            >
+                                                Soruyu Üret
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        }
-                        onClick={() => setShowAddMenu(!showAddMenu)}
-                        className={styles.addButton}
-                    >
-                        Soru Ekle
-                    </Button>
-
-                    {showAddMenu && (
-                        <div className={styles.addMenu}>
-                            {/* @ts-ignore */}
-                            {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
-                                <button
-                                    key={type}
-                                    className={styles.addMenuItem}
-                                    onClick={() => addQuestion(type as QuestionType)}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
-
-            <AIGeneratorModal
-                isOpen={isAIGenOpen}
-                onClose={() => setIsAIGenOpen(false)}
-                onGenerate={handleAIGeneration}
-                initialTopic={quiz.title}
-                isLoading={isGenerating}
-            />
+            )}
         </div>
     );
 };

@@ -75,7 +75,7 @@ Sadece transkripti yaz, yorum ekleme.`
     const data = await geminiResponse.json();
 
     if (!geminiResponse.ok) {
-        throw new Error(data.error?.message || 'Transkripsiyon başarısız');
+        throw new Error(data.error?.message || `Transkripsiyon başarısız (Kod: ${geminiResponse.status})`);
     }
 
     const transcriptText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -153,7 +153,7 @@ SADECE JSON döndür, başka açıklama ekleme. Format:
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error?.message || 'Analiz başarısız');
+        throw new Error(data.error?.message || `Analiz başarısız (Kod: ${response.status})`);
     }
 
     const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
@@ -186,7 +186,7 @@ export const generateQuiz = async (
     const {
         questionCount = 10,
         difficulty = 'medium',
-        questionTypes = ['multiple_choice', 'true_false', 'open_ended']
+        questionTypes = ['multiple_choice', 'true_false']
     } = options;
 
     const response = await fetch(
@@ -223,21 +223,14 @@ SINAV GEREKSİNİMLERİ:
 Her soru için format kuralları:
 1. multiple_choice: 4 şık, 1 doğru cevap. Şıklar çeldirici ve mantıklı olmalı.
 2. true_false: Kesin yargı bildiren cümleler kullan.
-3. open_ended: Öğrencinin yorum yapması veya açıklama getirmesi gereken sorular.
-4. fill_blank: Tanımlar veya formüller için idealdir. MUTLAKA "textWithBlanks" alanını doldur ve boşlukları {{blank_1}} şeklinde belirt. "blanks" dizisinde her boşluğun cevabını ver.
 
 JSON formatında döndür:
 {
   "questions": [
     {
       "id": "q1",
-      "type": "fill_blank", (veya multiple_choice, true_false, open_ended)
+      "type": "multiple_choice", (veya true_false)
       "question": "Soru metni...",
-      "textWithBlanks": "Örnek cümle {{blank_1}}, devamı ise {{blank_2}}.",
-      "blanks": [
-        {"id": "blank_1", "correctAnswer": "cevap1"},
-        {"id": "blank_2", "correctAnswer": "cevap2"}
-      ],
       "options": [{"id": "opt1", "text": "...", "isCorrect": true}], (Sadece çoktan seçmeli için)
       "correctAnswer": true, (Sadece doğru/yanlış için)
       "explanation": "Öğrenci yanlış yaparsa konuyu öğretecek açıklayıcı geri bildirim.",
@@ -264,7 +257,7 @@ SADECE JSON döndür.`
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error?.message || 'Quiz oluşturulamadı');
+        throw new Error(data.error?.message || `Quiz oluşturulamadı (Kod: ${response.status})`);
     }
 
     const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
@@ -296,20 +289,6 @@ SADECE JSON döndür.`
                 }
                 return { ...opt, id: opt.id || `opt_${idx}` };
             }) : [];
-        }
-
-        if (q.type === 'matching') {
-            base.pairs = Array.isArray(q.pairs) ? q.pairs.map((p: any, idx: number) => ({
-                ...p,
-                id: p.id || `pair_${idx}`
-            })) : [];
-        }
-
-        if (q.type === 'fill_blank') {
-            base.blanks = Array.isArray(q.blanks) ? q.blanks.map((b: any, idx: number) => ({
-                ...b,
-                id: b.id || `blank_${idx + 1}`
-            })) : [];
         }
 
         return base;
@@ -377,7 +356,7 @@ export const generateQuizFromTopic = async (
     2. Doğrudan konuyu, formülleri, tarihleri veya neden-sonuç ilişkilerini sor.
     3. Sorular net, anlaşılır ve eğitim müfredatına uygun olmalı.
     4. "multiple_choice" sorularında yanlış şıklar (çeldiriciler) mantıklı olmalı, bariz hatalı olmamalı.
-    5. "matching" sorularında sol ve sağ sütunlar birbiriyle ilişkili olmalı. (Örn: Kavram-Tanım, Olay-Tarih)
+    5. Sadece multiple_choice ve true_false tiplerini kullan.
     
     ÇIKTI FORMATI (JSON Array):
     Her soru aşağıdaki TypeScript arayüzüne uygun olmalıdır. "id" alanını boş bırakabilirsin, ben dolduracağım.
@@ -406,48 +385,6 @@ export const generateQuizFromTopic = async (
          explanation: "Açıklama",
          correctAnswer: true // veya false
        }
-       
-    3. matching:
-       {
-         type: "matching",
-         question: "Eşleştirme sorusu metni",
-         points: 10,
-         difficulty: "${difficulty}",
-         explanation: "Açıklama",
-         leftColumnTitle: "Sol Başlık",
-         rightColumnTitle: "Sağ Başlık",
-         pairs: [
-           { id: "pair1", left: "Sol 1", right: "Sağ 1" },
-           { id: "pair2", left: "Sol 2", right: "Sağ 2" }
-         ]
-       }
-       
-    4. open_ended:
-       {
-         type: "open_ended",
-         question: "Soru metni",
-         points: 10,
-         difficulty: "${difficulty}",
-         explanation: "Beklenen cevap özeti",
-         sampleAnswer: "Örnek cevap",
-         keywords: ["anahtar", "kelime"]
-       }
-       
-    5. fill_blank:
-       {
-         type: "fill_blank",
-         question: "Aşağıdaki boşlukları doldurun.",
-         points: 10,
-         difficulty: "${difficulty}",
-         explanation: "Açıklama",
-         textWithBlanks: "Cümle başı {{blank_1}} cümle sonu. Diğer boşluk {{blank_2}}.",
-         blanks: [
-           { id: "blank_1", correctAnswer: "cevap1", alternatives: ["alt cevap"] },
-           { id: "blank_2", correctAnswer: "cevap2" }
-         ]
-       }
-       
-       ÖNEMLİ: fill_blank sorularında "textWithBlanks" alanı ZORUNLUDUR ve {{blank_X}} formatında placeholderlar içermelidir. "blanks" dizisi bu placeholderların cevaplarını içermelidir.
 
     SADECE JSON ARRAY DÖNDÜR. Başka metin ekleme.
     `;
@@ -469,11 +406,11 @@ export const generateQuizFromTopic = async (
             }
         );
 
-        if (!response.ok) {
-            throw new Error('AI servisi yanıt vermedi.');
-        }
+        const data = await response.json().catch(() => ({}));
 
-        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || `AI servisi hata döndürdü (Kod: ${response.status})`);
+        }
         const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
 
         // JSON clean up
@@ -492,14 +429,6 @@ export const generateQuizFromTopic = async (
 
             if (q.type === 'multiple_choice' && q.options) {
                 base.options = q.options.map((opt: any, idx: number) => ({ ...opt, id: opt.id || `opt_${idx}` }));
-            }
-
-            if (q.type === 'matching' && q.pairs) {
-                base.pairs = q.pairs.map((pair: any, idx: number) => ({ ...pair, id: pair.id || `pair_${idx}` }));
-            }
-
-            if (q.type === 'fill_blank' && q.blanks) {
-                base.blanks = q.blanks.map((blank: any, idx: number) => ({ ...blank, id: blank.id || `blank_${idx + 1}` }));
             }
 
             return base;
@@ -563,11 +492,11 @@ export const improveQuestion = async (params: ImproveQuestionParams): Promise<an
             }
         );
 
-        if (!response.ok) {
-            throw new Error('AI servisi yanıt vermedi.');
-        }
+        const data = await response.json().catch(() => ({}));
 
-        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || `AI iyileştirme başarısız (Kod: ${response.status})`);
+        }
         const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
 
         // JSON clean up

@@ -71,6 +71,7 @@ export const createQuiz = async (
         description: payload.description || '',
         sessionId: payload.sessionId || null,
         classId: payload.classId || null,
+        classIds: payload.classIds || [],
         teacherId,
         questions: sanitizeForFirestore(questions),
         settings,
@@ -426,48 +427,10 @@ export const submitQuiz = async (
                 isCorrect = q.correctAnswer === answer.booleanAnswer;
                 break;
             }
-            case 'matching': {
-                const q = question as any;
-                if (answer.matchedPairs && q.pairs) {
-                    const totalPairs = q.pairs.length;
-                    let correctPairs = 0;
-                    q.pairs.forEach((p: any) => {
-                        const studentMatch = answer.matchedPairs?.find(m => m.leftId === `left_${p.id}` || m.leftId === p.id);
-                        if (studentMatch && studentMatch.rightId === p.id) {
-                            correctPairs++;
-                        }
-                    });
-                    isCorrect = correctPairs === totalPairs;
-                    // Partial points for matching
-                    pointsEarned = Math.floor((correctPairs / totalPairs) * question.points);
-                }
-                break;
-            }
-            case 'fill_blank': {
-                const q = question as any;
-                if (answer.blankAnswers && q.blanks) {
-                    const totalBlanks = q.blanks.length;
-                    let correctBlanks = 0;
-                    q.blanks.forEach((b: any) => {
-                        const studentAns = answer.blankAnswers?.find(sa => sa.blankId === b.id)?.answer;
-                        if (studentAns && studentAns.trim().toLowerCase() === b.correctAnswer.trim().toLowerCase()) {
-                            correctBlanks++;
-                        }
-                    });
-                    isCorrect = correctBlanks === totalBlanks;
-                    // Partial points for blanks
-                    pointsEarned = Math.floor((correctBlanks / totalBlanks) * question.points);
-                }
-                break;
-            }
-            case 'open_ended':
-                // Open ended questions are always 0 until teacher grades
-                isCorrect = false;
-                break;
         }
 
         // Apply full points for simple corrected answers
-        if (isCorrect && question.type !== 'matching' && question.type !== 'fill_blank') {
+        if (isCorrect) {
             pointsEarned = question.points;
         }
 

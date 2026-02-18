@@ -11,6 +11,9 @@ export type { CardProps, CardHeaderProps, CardTitleProps, CardContentProps, Card
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 
+export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export type { ConfirmModalProps } from './ConfirmModal/ConfirmModal';
+
 export { Loader, PageLoader } from './Loader';
 export type { LoaderProps, PageLoaderProps } from './Loader';
 

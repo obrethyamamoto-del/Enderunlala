@@ -113,24 +113,6 @@ const StudentQuizPlayer: React.FC = () => {
                         base.selectedOptionIds = [val as string];
                     } else if (question.type === 'true_false') {
                         base.booleanAnswer = val as boolean;
-                    } else if (question.type === 'open_ended') {
-                        base.textAnswer = val as string;
-                    } else if (question.type === 'matching') {
-                        // val is object { leftId: rightId }, convert to array
-                        if (typeof val === 'object') {
-                            base.matchedPairs = Object.entries(val).map(([left, right]) => ({
-                                leftId: left,
-                                rightId: right as string
-                            }));
-                        }
-                    } else if (question.type === 'fill_blank') {
-                        // val is object { blankId: answer }, convert to array
-                        if (typeof val === 'object') {
-                            base.blankAnswers = Object.entries(val).map(([bId, ans]) => ({
-                                blankId: bId,
-                                answer: ans as string
-                            }));
-                        }
                     }
 
                     return base;

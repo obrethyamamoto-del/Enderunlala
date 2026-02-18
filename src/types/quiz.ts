@@ -7,9 +7,6 @@
 export const QUESTION_TYPES = {
     MULTIPLE_CHOICE: 'multiple_choice',
     TRUE_FALSE: 'true_false',
-    OPEN_ENDED: 'open_ended',
-    MATCHING: 'matching',
-    FILL_BLANK: 'fill_blank',
 } as const;
 
 export type QuestionType = (typeof QUESTION_TYPES)[keyof typeof QUESTION_TYPES];
@@ -57,66 +54,11 @@ export interface TrueFalseQuestion extends BaseQuestion {
     correctAnswer: boolean;
 }
 
-// ============================================================
-// AÇIK UÇLU SORU
-// ============================================================
-export interface OpenEndedQuestion extends BaseQuestion {
-    type: typeof QUESTION_TYPES.OPEN_ENDED;
-    sampleAnswer?: string; // Örnek/beklenen cevap
-    minLength?: number; // Minimum karakter sayısı
-    maxLength?: number; // Maximum karakter sayısı
-    keywords?: string[]; // Otomatik değerlendirme için anahtar kelimeler
-    gradingRubric?: GradingRubric[]; // Puanlama kriterleri
-}
-
-export interface GradingRubric {
-    criterion: string;
-    points: number;
-    description: string;
-}
-
-// ============================================================
-// EŞLEŞTİRME SORUSU
-// ============================================================
-export interface MatchingPair {
-    id: string;
-    left: string; // Sol taraf (kavram, terim vb.)
-    right: string; // Sağ taraf (tanım, açıklama vb.)
-}
-
-export interface MatchingQuestion extends BaseQuestion {
-    type: typeof QUESTION_TYPES.MATCHING;
-    pairs: MatchingPair[];
-    leftColumnTitle?: string; // Sol kolon başlığı
-    rightColumnTitle?: string; // Sağ kolon başlığı
-    shufflePairs?: boolean; // Eşleştirmeler karıştırılsın mı?
-}
-
-// ============================================================
-// BOŞLUK DOLDURMA SORUSU
-// ============================================================
-export interface BlankSlot {
-    id: string;
-    correctAnswer: string;
-    alternatives?: string[]; // Kabul edilebilir alternatif cevaplar
-    caseSensitive?: boolean; // Büyük/küçük harf duyarlı mı?
-}
-
-export interface FillBlankQuestion extends BaseQuestion {
-    type: typeof QUESTION_TYPES.FILL_BLANK;
-    textWithBlanks: string; // "Türkiye'nin başkenti {{blank_1}} şehridir."
-    blanks: BlankSlot[];
-}
-
-// ============================================================
 // BİRLEŞİK SORU TİPİ
 // ============================================================
 export type Question =
     | MultipleChoiceQuestion
-    | TrueFalseQuestion
-    | OpenEndedQuestion
-    | MatchingQuestion
-    | FillBlankQuestion;
+    | TrueFalseQuestion;
 
 // ============================================================
 // QUIZ INTERFACE'LERİ
@@ -132,6 +74,7 @@ export interface Quiz {
     sessionId?: string;
     teacherId: string;
     classId?: string;
+    classIds?: string[];
 
     // Sorular
     questions: Question[];
@@ -151,7 +94,7 @@ export interface Quiz {
     dueDate?: Date;
 }
 
-export type QuizStatus = 'draft' | 'published' | 'closed' | 'archived';
+export type QuizStatus = 'draft' | 'approved' | 'published' | 'closed' | 'archived';
 
 export interface QuizSettings {
     // Zaman ayarları
@@ -213,9 +156,6 @@ export interface QuestionAnswer {
     // Cevap (tip bazlı)
     selectedOptionIds?: string[]; // multiple_choice
     booleanAnswer?: boolean; // true_false
-    textAnswer?: string; // open_ended
-    matchedPairs?: { leftId: string; rightId: string }[]; // matching
-    blankAnswers?: { blankId: string; answer: string }[]; // fill_blank
 
     // Değerlendirme
     isCorrect?: boolean;
@@ -240,6 +180,7 @@ export interface CreateQuizPayload {
     description?: string;
     sessionId?: string;
     classId?: string;
+    classIds?: string[];
     questions?: CreateQuestionPayload[];
     settings?: Partial<QuizSettings>;
 }
@@ -248,9 +189,6 @@ export interface CreateQuizPayload {
 export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
     multiple_choice: 'Çoktan Seçmeli',
     true_false: 'Doğru/Yanlış',
-    open_ended: 'Açık Uçlu',
-    matching: 'Eşleştirme',
-    fill_blank: 'Boşluk Doldurma',
 };
 
 // Zorluk etiketleri
@@ -300,40 +238,6 @@ export const createEmptyQuestion = (type: QuestionType, order: number): Question
                 correctAnswer: true,
             };
 
-        case QUESTION_TYPES.OPEN_ENDED:
-            return {
-                ...baseProps,
-                type: QUESTION_TYPES.OPEN_ENDED,
-                sampleAnswer: '',
-                minLength: 50,
-                maxLength: 1000,
-            };
-
-        case QUESTION_TYPES.MATCHING:
-            return {
-                ...baseProps,
-                type: QUESTION_TYPES.MATCHING,
-                pairs: [
-                    { id: 'pair_1', left: '', right: '' },
-                    { id: 'pair_2', left: '', right: '' },
-                    { id: 'pair_3', left: '', right: '' },
-                ],
-                leftColumnTitle: 'Kavram',
-                rightColumnTitle: 'Tanım',
-                shufflePairs: true,
-            };
-
-        case QUESTION_TYPES.FILL_BLANK:
-            return {
-                ...baseProps,
-                type: QUESTION_TYPES.FILL_BLANK,
-                textWithBlanks: 'Cümlenin içinde {{blank_1}} ve {{blank_2}} boşlukları doldurun.',
-                blanks: [
-                    { id: 'blank_1', correctAnswer: '', caseSensitive: false },
-                    { id: 'blank_2', correctAnswer: '', caseSensitive: false },
-                ],
-            };
-
         default:
             throw new Error(`Unknown question type: ${type}`);
     }
@@ -365,12 +269,9 @@ export const calculateTotalPoints = (questions: Question[]): number => {
 
 // Tahmini süre hesaplama (soru başına ortalama)
 export const estimateQuizDuration = (questions: Question[]): number => {
-    const timePerQuestion: Record<QuestionType, number> = {
+    const timePerQuestion: Record<string, number> = {
         multiple_choice: 1,
         true_false: 0.5,
-        open_ended: 3,
-        matching: 2,
-        fill_blank: 1.5,
     };
 
     return Math.ceil(

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Menu, Bell, Moon, Sun, User } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
 import { useUIStore } from '../../../stores/uiStore';
@@ -8,7 +8,7 @@ import styles from './Header.module.css';
 
 export const Header: React.FC = () => {
     const user = useAuthStore((state) => state.user);
-    const location = useLocation();
+
     const { theme, toggleTheme, toggleSidebar } = useUIStore();
 
     const getRoleLabel = () => {
@@ -40,14 +40,7 @@ export const Header: React.FC = () => {
                     <span className={styles.logoText}>Lala</span>
                 </Link>
 
-                {user?.role === 'teacher' && (
-                    <nav className={styles.desktopNav}>
-                        <Link to={ROUTES.TEACHER.DASHBOARD} className={location.pathname === ROUTES.TEACHER.DASHBOARD ? styles.activeNavLink : styles.navLink}>Dashboard</Link>
-                        <Link to={ROUTES.TEACHER.SESSIONS} className={location.pathname.startsWith('/teacher/sessions') ? styles.activeNavLink : styles.navLink}>AI Analiz</Link>
-                        <Link to={ROUTES.TEACHER.QUIZZES} className={location.pathname.startsWith('/teacher/quizzes') ? styles.activeNavLink : styles.navLink}>Quizlerim</Link>
-                        <Link to={ROUTES.TEACHER.REPORTS} className={location.pathname.startsWith('/teacher/reports') ? styles.activeNavLink : styles.navLink}>Raporlar</Link>
-                    </nav>
-                )}
+
             </div>
 
             <div className={styles.right}>

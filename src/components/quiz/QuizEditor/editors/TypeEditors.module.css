@@ -1,198 +1,519 @@
 /* ============================================
-   ORTAK STİLLER - TÜM SORU TİPLERİ İÇİN
+   ORTAK STİLLER - PREMIUM 
    ============================================ */
 
 .textarea {
     width: 100%;
-    padding: 16px;
-    font-size: 14px;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1.5px solid var(--color-gray-100);
+    border-radius: 18px;
     resize: vertical;
-    font-family: inherit;
-    line-height: 1.5;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
+    color: var(--color-text-primary);
+    line-height: 1.6;
 }
 
 .textarea:focus {
     outline: none;
-    border-color: #8B5CF6;
+    border-color: var(--color-primary-light);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.05);
 }
 
-/* Editor actions — Bottom row for options like 'Birden fazla doğru cevap' */
 .editorActions {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 24px;
-    margin-top: 16px;
-    padding-top: 24px;
-    border-top: 1px solid #F3F4F6;
+    margin-top: 24px;
+    padding: 16px 24px;
+    background: var(--color-bg-light);
+    border-radius: 20px;
+    border: 1px solid var(--color-gray-50);
 }
 
 .checkbox {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 13px;
-    font-weight: 600;
-    color: #6B7280;
+    font-weight: 700;
+    color: var(--color-text-secondary);
     cursor: pointer;
 }
 
 .checkbox input {
-    width: 18px;
-    height: 18px;
-    accent-color: #8B5CF6;
-    border-radius: 50%;
-    /* Circle for checkboxes per image */
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
 }
 
 .removeButton {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     border: none;
     background: transparent;
-    color: #9CA3AF;
-    cursor: pointer;
+    color: var(--color-gray-300);
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
-.removeButton:hover:not(:disabled) {
+.removeButton:hover {
+    background: #FEF2F2;
     color: #EF4444;
 }
 
+/* Field Helpers */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.fieldLabel {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--color-gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.optional {
+    text-transform: none;
+    font-weight: 600;
+    color: var(--color-gray-300);
+    letter-spacing: 0;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
 /* ============================================
-   ÇOKTAN SEÇMELİ (MULTIPLE CHOICE)
+   ÇOKTAN SEÇMELİ
    ============================================ */
 
 .mcEditor {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
 }
 
 .optionsList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .optionItem {
     display: flex;
     align-items: center;
-    gap: 16px;
-    transition: all 0.2s;
+    gap: 14px;
 }
 
 .optionLabel {
-    width: 36px;
-    height: 36px;
-    border: none;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background-color: #F3F4F6;
-    color: #374151;
-    font-weight: 800;
+    background: var(--color-bg-light);
+    color: var(--color-text-tertiary);
+    font-weight: 900;
     font-size: 14px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1.5px solid transparent;
 }
 
 .optionLabel:hover {
-    background-color: #E5E7EB;
+    background: white;
+    border-color: var(--color-primary-light);
+    color: var(--color-primary);
 }
 
 .optionLabel.selected {
-    background-color: #10B981;
+    background: #10B981;
     color: white;
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    border-color: #10B981;
 }
 
 .optionInput {
     flex: 1;
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    background-color: white;
-    border: 1px solid #F3F4F6;
-    border-radius: 12px;
-    transition: all 0.2s;
-    min-width: 0;
+    padding: 16px 20px;
+    border: 1.5px solid var(--color-gray-100);
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
+    resize: none;
+    overflow: hidden;
+    min-height: 56px;
+    line-height: 1.5;
+    display: block;
+    font-family: inherit;
+    outline: none;
 }
 
 .optionInput:focus {
-    outline: none;
-    border-color: #8B5CF6;
-    background-color: white;
+    border-color: var(--color-primary-light);
+    background: white;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.04);
 }
 
-.optionItem.correct .optionInput {
+.correct .optionInput {
     border-color: #10B981;
-    background-color: #F0FDF4;
-    /* Light success bg for the input itself as well */
+    background: #F0FDF4;
 }
 
-/* Addition Styles for the "Add Option" button in MultipleChoiceEditor.tsx */
 .addOptionBtn {
-    color: #8B5CF6 !important;
-    font-weight: 800 !important;
-    font-size: 13px !important;
+    margin-top: 12px;
+    color: var(--color-primary) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.01em !important;
 }
 
-/* Rest of the editors (TF, OE, Match, FB) omitted for brevity or kept minimal 
-   as the focus is on matching the Multiple Choice image provided */
-
-/* TRUE/FALSE */
+/* ============================================
+   DOĞRU / YANLIŞ
+   ============================================ */
 .tfEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tfLabel {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.tfOptions {
     display: flex;
     gap: 16px;
 }
 
 .tfButton {
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 1px solid #E5E7EB;
+    flex: 1;
+    height: 64px;
+    border-radius: 24px;
+    border: 1.5px solid var(--color-gray-100);
     background: white;
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
 }
 
-.tfButton.selected {
-    background: #8B5CF6;
-    color: white;
-    border-color: #8B5CF6;
+.tfButton:hover:not(.selected) {
+    border-color: var(--color-primary-light);
+    background: var(--color-bg-light);
+    transform: translateY(-2px);
 }
 
-/* OPEN ENDED */
+.tfButton.selected {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: 0 12px 24px rgba(139, 92, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.tfIcon {
+    font-size: 18px;
+}
+
+/* ============================================
+   AÇIK UÇLU (OPEN ENDED)
+   ============================================ */
 .oeEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rubricSection {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--color-gray-100);
+}
+
+.rubricHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.rubricItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.rubricPoints {
+    width: 100px !important;
+}
+
+.helpText {
+    font-size: 12px;
+    color: var(--color-gray-400);
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* ============================================
+   BOŞLUK DOLDURMA (FILL BLANK)
+   ============================================ */
+.fbEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.fbTextWrapper {
+    position: relative;
+}
+
+.insertBlankBtn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: white !important;
+    border: 1px solid var(--color-gray-200) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+.fbPreview {
+    background: #F8FAFC;
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid #F1F5F9;
+}
+
+.previewText {
+    font-size: 16px;
+    line-height: 2.2;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    margin: 0;
+}
+
+.previewBlank {
+    background: #EDE9FE;
+    color: var(--color-primary);
+    padding: 2px 12px;
+    border-radius: 8px;
+    margin: 0 4px;
+    font-weight: 800;
+    border-bottom: 2px solid #DDD6FE;
+}
+
+.blanksSection {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-/* MATCHING */
-.matchEditor {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.matchPairItem {
+.blankItem {
+    background: white;
+    border: 1px solid var(--color-gray-100);
+    padding: 20px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.blankItem:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.blankNumber {
+    width: 32px;
+    height: 32px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.blankInputs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.alternativesInput input {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+.checkboxSmall {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-gray-400);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* ============================================
+   INFO GRID / READONLY
+   ============================================ */
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
 }
 
-/* FILL BLANK */
-.fbEditor {
+.infoBadge {
+    padding: 16px;
+    background: white;
+    border: 1px solid var(--color-gray-100);
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 4px;
+}
+
+.infoBadgeLabel {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--color-gray-400);
+    text-transform: uppercase;
+}
+
+.infoBadgeValue {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.readOnly .tfButton:not(.selected) {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+.fbRenderContainer {
+    line-height: 2.2;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.fbRenderBlank {
+    background: var(--color-bg-light);
+    color: var(--color-primary);
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-weight: 800;
+    margin: 0 4px;
+    border-bottom: 2px solid var(--color-primary-light);
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .textarea {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .mcEditor {
+        gap: 20px;
+    }
+
+    .optionsList {
+        gap: 14px;
+    }
+
+    .optionItem {
+        gap: 10px;
+    }
+
+    .optionLabel {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .optionInput {
+        padding: 12px 16px;
+        font-size: 12px;
+        border-radius: 12px;
+        min-height: 48px;
+    }
+
+    .removeButton {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+
+    .tfOptions {
+        gap: 10px;
+    }
+
+    .tfButton {
+        height: 42px;
+        font-size: 12px;
+        border-radius: 12px;
+        gap: 6px;
+    }
+
+    .tfIcon {
+        font-size: 12px;
+    }
+
+    .editorActions {
+        padding: 12px;
+        margin-top: 16px;
+    }
 }

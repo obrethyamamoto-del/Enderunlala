@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { Button } from '../../../common';
 import type { MultipleChoiceQuestion, MultipleChoiceOption } from '../../../../types/quiz';
@@ -7,13 +7,30 @@ import styles from './TypeEditors.module.css';
 interface MultipleChoiceEditorProps {
     question: MultipleChoiceQuestion;
     onChange: (updates: Partial<MultipleChoiceQuestion>) => void;
+    readOnly?: boolean;
 }
 
 export const MultipleChoiceEditor: React.FC<MultipleChoiceEditorProps> = ({
     question,
     onChange,
+    readOnly = false,
 }) => {
+    const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
+
+    const autoResize = (target: HTMLTextAreaElement | null) => {
+        if (target) {
+            target.style.height = 'auto';
+            target.style.height = target.scrollHeight + 'px';
+        }
+    };
+
+    useLayoutEffect(() => {
+        question.options.forEach(option => {
+            autoResize(textareaRefs.current[option.id]);
+        });
+    }, [question.options]);
     const updateOption = (optionId: string, updates: Partial<MultipleChoiceOption>) => {
+        if (readOnly) return;
         const newOptions = question.options.map(opt =>
             opt.id === optionId ? { ...opt, ...updates } : opt
         );
@@ -21,6 +38,7 @@ export const MultipleChoiceEditor: React.FC<MultipleChoiceEditorProps> = ({
     };
 
     const setCorrectAnswer = (optionId: string) => {
+        if (readOnly) return;
         if (question.allowMultiple) {
             // Toggle for multiple correct answers
             const newOptions = question.options.map(opt =>
@@ -38,6 +56,7 @@ export const MultipleChoiceEditor: React.FC<MultipleChoiceEditorProps> = ({
     };
 
     const addOption = () => {
+        if (readOnly) return;
         const newOption: MultipleChoiceOption = {
             id: `opt_${Date.now()}`,
             text: '',
@@ -47,6 +66,7 @@ export const MultipleChoiceEditor: React.FC<MultipleChoiceEditorProps> = ({
     };
 
     const removeOption = (optionId: string) => {
+        if (readOnly) return;
         if (question.options.length <= 2) return; // Minimum 2 şık
         const newOptions = question.options.filter(opt => opt.id !== optionId);
         onChange({ options: newOptions });
@@ -66,62 +86,51 @@ export const MultipleChoiceEditor: React.FC<MultipleChoiceEditorProps> = ({
                             type="button"
                             className={`${styles.optionLabel} ${option.isCorrect ? styles.selected : ''}`}
                             onClick={() => setCorrectAnswer(option.id)}
+                            disabled={readOnly}
                             title={option.isCorrect ? 'Doğru cevap' : 'Doğru cevap olarak işaretle'}
                         >
                             {option.isCorrect ? <Check size={18} /> : optionLabels[index]}
                         </button>
 
-                        <input
-                            type="text"
+                        <textarea
+                            ref={el => { textareaRefs.current[option.id] = el; }}
                             value={option.text}
                             onChange={(e) => updateOption(option.id, { text: e.target.value })}
                             placeholder={`${optionLabels[index]} şıkkı...`}
                             className={styles.optionInput}
+                            readOnly={readOnly}
+                            rows={1}
                         />
 
-                        <button
-                            type="button"
-                            onClick={() => removeOption(option.id)}
-                            className={styles.removeButton}
-                            disabled={question.options.length <= 2}
-                            title="Şıkkı sil"
-                        >
-                            <Trash2 size={18} />
-                        </button>
+                        {!readOnly && (
+                            <button
+                                type="button"
+                                onClick={() => removeOption(option.id)}
+                                className={styles.removeButton}
+                                disabled={question.options.length <= 2}
+                                title="Şıkkı sil"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>
 
-            <div className={styles.editorActions}>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    leftIcon={<Plus size={18} />}
-                    onClick={addOption}
-                    disabled={question.options.length >= 8}
-                    className={styles.addOptionBtn}
-                >
-                    Şık Ekle
-                </Button>
-
-                <label className={styles.checkbox}>
-                    <input
-                        type="checkbox"
-                        checked={question.allowMultiple || false}
-                        onChange={(e) => onChange({ allowMultiple: e.target.checked })}
-                    />
-                    <span>Birden fazla doğru cevap</span>
-                </label>
-
-                <label className={styles.checkbox}>
-                    <input
-                        type="checkbox"
-                        checked={question.shuffleOptions !== false}
-                        onChange={(e) => onChange({ shuffleOptions: e.target.checked })}
-                    />
-                    <span>Şıkları karıştır</span>
-                </label>
-            </div>
+            {!readOnly && (
+                <div className={styles.editorActions}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={<Plus size={18} />}
+                        onClick={addOption}
+                        disabled={question.options.length >= 8}
+                        className={styles.addOptionBtn}
+                    >
+                        Şık Ekle
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };

@@ -20,12 +20,13 @@ import { useUIStore } from '../../../stores/uiStore';
 import { getSession, updateSession } from '../../../services/sessionService';
 import { createQuiz } from '../../../services/quizService';
 import { processSession } from '../../../services/aiService';
-import type { LessonAnalysis, GeneratedQuiz, TranscriptionResult } from '../../../types';
+import type { LessonAnalysis, GeneratedQuiz } from '../../../types';
 import { Button, Loader } from '../../../components/common';
 import { ROUTES, generatePath } from '../../../config/routes';
 import type { Session, Question } from '../../../types';
 import { generateQuestionId, QUESTION_TYPES, DEFAULT_QUIZ_SETTINGS, calculateTotalPoints, estimateQuizDuration } from '../../../types';
 import { useAuthStore } from '../../../stores/authStore';
+import { ConfirmModal } from '../../../components/common';
 import styles from './SessionDetail.module.css';
 
 type ProcessingStep = 'idle' | 'transcribing' | 'analyzing' | 'generating' | 'completed' | 'error';
@@ -42,9 +43,10 @@ export const SessionDetail: React.FC = () => {
     const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
     const [processingProgress, setProcessingProgress] = useState(0);
     const [processingMessage, setProcessingMessage] = useState('');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // AI Results
-    const [transcript, setTranscript] = useState<TranscriptionResult | null>(null);
+
     const [analysis, setAnalysis] = useState<LessonAnalysis | null>(null);
     const [quiz, setQuiz] = useState<GeneratedQuiz | null>(null);
 
@@ -95,7 +97,7 @@ export const SessionDetail: React.FC = () => {
 
                 // Check if already processed
                 if (data?.analysisResults) {
-                    setTranscript(data.analysisResults.transcript);
+
                     setAnalysis(data.analysisResults.analysis);
                     setQuiz(data.analysisResults.quiz);
                     setProcessingStep('completed');
@@ -136,7 +138,7 @@ export const SessionDetail: React.FC = () => {
                 }
             );
 
-            setTranscript(results.transcript);
+
             setAnalysis(results.analysis);
             setQuiz(results.quiz);
             setProcessingStep('completed');
@@ -161,7 +163,7 @@ export const SessionDetail: React.FC = () => {
             addToast({
                 type: 'success',
                 title: 'İşlem Tamamlandı!',
-                message: 'Ders kaydınız analiz edildi ve quiz hazır.',
+                message: 'Ders kaydınız analiz edildi ve quiz taslağı oluşturuldu.',
             });
 
         } catch (error: any) {
@@ -211,23 +213,6 @@ export const SessionDetail: React.FC = () => {
                         type: QUESTION_TYPES.TRUE_FALSE,
                         correctAnswer: q.correctAnswer as boolean
                     } as Question;
-                } else if (q.type === 'open_ended') {
-                    return {
-                        ...baseQuestion,
-                        type: QUESTION_TYPES.OPEN_ENDED,
-                    } as Question;
-                } else if (q.type === 'fill_blank') {
-                    // Start filling logic if needed, for now just basic structure
-                    return {
-                        ...baseQuestion,
-                        type: QUESTION_TYPES.FILL_BLANK,
-                        textWithBlanks: q.textWithBlanks || q.question, // Use textWithBlanks if available
-                        blanks: q.blanks?.map(b => ({
-                            id: b.id,
-                            correctAnswer: b.correctAnswer,
-                            caseSensitive: false
-                        })) || []
-                    } as unknown as Question;
                 }
 
                 return baseQuestion as Question;
@@ -249,7 +234,7 @@ export const SessionDetail: React.FC = () => {
 
             const createdQuiz = await createQuiz(user.id, newQuiz);
 
-            addToast({ type: 'success', title: 'Başarılı', message: 'Quiz taslağı oluşturuldu.' });
+            addToast({ type: 'success', title: 'Başarılı', message: 'Quiz taslağı düzenleme için oluşturuldu.' });
 
             // Navigate to editor
             navigate(generatePath(ROUTES.TEACHER.QUIZ_EDIT, { id: createdQuiz.id }));
@@ -318,145 +303,98 @@ export const SessionDetail: React.FC = () => {
     };
 
     // Render results
+    // Render results
     const renderResults = () => {
         if (!analysis || !quiz) return null;
 
         return (
             <div className={styles.results}>
-                {/* Analysis Card — User Refined Design */}
-                <div className={styles.analysisCard}>
-                    {/* Header with Bulb Icon */}
-                    <div className={styles.analysisHeader}>
-                        <div style={{ width: '40px', height: '40px', background: '#F3E8FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Brain size={20} color="#9333EA" />
+                <div className={styles.unifiedCard}>
+                    {/* Header */}
+                    <div className={styles.unifiedHeader}>
+                        <div className={styles.headerIcon}>
+                            <Sparkles size={24} color="#7C3AED" />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#111827' }}>Ders Analizi</h3>
-                    </div>
-
-                    {/* Title */}
-                    <span className={styles.sectionLabel}>BAŞLIK</span>
-                    <h4 className={styles.analysisTitle}>{analysis.title}</h4>
-
-                    {/* Meta Grid (Ders & Seviye) */}
-                    <div className={styles.metaGrid}>
-                        <div className={styles.metaItem}>
-                            <span className={styles.sectionLabel}>DERS</span>
-                            <span className={styles.badgePurple}>{analysis.subject}</span>
+                        <div className={styles.headerText}>
+                            <h2>Ders Analizi ve Sınav Planı</h2>
+                            <p>Yapay zeka tarafından oluşturulan ders özeti ve sınav taslağı.</p>
                         </div>
-                        {analysis.gradeLevel && (
-                            <div className={styles.metaItem}>
-                                <span className={styles.sectionLabel}>SEVİYE</span>
-                                <span className={styles.badgeTeal}>{analysis.gradeLevel}</span>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Summary */}
-                    <span className={styles.sectionLabel}>ÖZET</span>
-                    <p className={styles.summaryText}>{analysis.summary}</p>
+                    <div className={styles.unifiedBody}>
+                        {/* Left: Lesson Info */}
+                        <div className={styles.analysisSection}>
+                            <span className={styles.sectionTag}>DERS BİLGİLERİ</span>
+                            <h3 className={styles.lessonTitle}>{analysis.title}</h3>
 
-                    {/* Topics */}
-                    <span className={styles.sectionLabel}>ANAHTAR KONULAR</span>
-                    <div className={styles.topicsList}>
-                        {analysis.keyTopics.map((topic, i) => (
-                            <span key={i} className={styles.topicTag}>{topic}</span>
-                        ))}
-                    </div>
-
-                    {/* Concepts */}
-                    <div style={{ marginTop: '40px' }}>
-                        <span className={styles.sectionLabel}>ÖNEMLİ KAVRAMLAR ({analysis.keyConcepts.length})</span>
-                        <div className={styles.conceptsGrid}>
-                            {analysis.keyConcepts.slice(0, 4).map((concept, i) => (
-                                <div key={i} className={styles.conceptItem}>
-                                    <strong>{concept.term}</strong>
-                                    <p>{concept.definition}</p>
+                            <div className={styles.tagsValues}>
+                                <div className={styles.tagItem}>
+                                    <span className={styles.tagLabel}>DERS</span>
+                                    <span className={styles.tagValue}>{analysis.subject}</span>
                                 </div>
-                            ))}
+                                {analysis.gradeLevel && (
+                                    <div className={styles.tagItem}>
+                                        <span className={styles.tagLabel}>SEVİYE</span>
+                                        <span className={styles.tagValue}>{analysis.gradeLevel}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.summaryBlock}>
+                                <span className={styles.label}>ÖZET</span>
+                                <p>{analysis.summary}</p>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className={styles.verticalDivider}></div>
+
+                        {/* Right: Quiz Plan */}
+                        <div className={styles.quizSection}>
+                            <span className={styles.sectionTag}>SINAV TASLAĞI</span>
+
+                            <div className={styles.quizStatsGrid}>
+                                <div className={styles.quizStat}>
+                                    <span className={styles.qValue}>{quiz.questions.length}</span>
+                                    <span className={styles.qLabel}>SORU</span>
+                                </div>
+                                <div className={styles.quizStat}>
+                                    <span className={styles.qValue}>{quiz.estimatedTime}</span>
+                                    <span className={styles.qLabel}>DAKİKA</span>
+                                </div>
+                                <div className={styles.quizStat}>
+                                    <span className={styles.qValue}>
+                                        {quiz.difficulty === 'easy' ? 'Kolay' : quiz.difficulty === 'medium' ? 'Orta' : 'Zor'}
+                                    </span>
+                                    <span className={styles.qLabel}>ZORLUK</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.actionArea}>
+                                <Button
+                                    className={styles.primaryActionBtn}
+                                    leftIcon={<Edit3 size={18} />}
+                                    onClick={handleCreateQuiz}
+                                    disabled={isCreatingQuiz}
+                                    isLoading={isCreatingQuiz}
+                                >
+                                    Soruları Düzenle ve Sınav Oluştur
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Quiz Preview Card */}
-                {/* Quiz Preview Card — Vibrant Gradient Design */}
-                {/* Quiz Preview Card — Clean Design */}
-                <div className={styles.quizCard}>
-                    <div className={styles.quizHeader}>
-                        <div style={{ width: '40px', height: '40px', background: '#F3E8FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <BookOpen size={20} color="#9333EA" />
-                        </div>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#111827' }}>Oluşturulan Quiz</h3>
-                    </div>
-
-                    {/* Stats Row */}
-                    <div className={styles.quizStats}>
-                        <div className={`${styles.statItem} ${styles.statPurple}`}>
-                            <span className={styles.statValue}>{quiz.questions.length}</span>
-                            <span className={styles.statLabel}>SORU SAYISI</span>
-                        </div>
-                        <div className={`${styles.statItem} ${styles.statTeal}`}>
-                            <span className={styles.statValue}>{quiz.estimatedTime}</span>
-                            <span className={styles.statLabel}>DAKİKA</span>
-                        </div>
-                        <div className={`${styles.statItem} ${styles.statOrange}`}>
-                            <span className={styles.statValue}>
-                                {quiz.difficulty === 'easy' ? 'Kolay' : quiz.difficulty === 'medium' ? 'Orta' : 'Zor'}
-                            </span>
-                            <span className={styles.statLabel}>ZORLUK SEVİYESİ</span>
-                        </div>
-                    </div>
-
-                    {/* Questions List */}
-                    <div className={styles.questionPreview}>
-                        <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '16px' }}>
-                            ÖRNEK SORULAR
-                        </h4>
-                        {quiz.questions.slice(0, 3).map((q, i) => (
-                            <div key={q.id} className={styles.questionItem}>
-                                <div className={styles.questionNumber}>{i + 1}</div>
-                                <p>{q.question}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Action Button */}
-                    <div className={styles.quizActions}>
-                        <Button
-                            className={styles.editQuizBtn}
-                            leftIcon={<Edit3 size={18} color="white" />}
-                            onClick={handleCreateQuiz}
-                            disabled={isCreatingQuiz}
-                            isLoading={isCreatingQuiz}
-                        >
-                            Soruları Düzenle ve Kaydet
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Transcript Card — Clean Design */}
-                {transcript && (
-                    <div className={styles.transcriptCard}>
-                        <div className={styles.transcriptHeader}>
-                            <div style={{ width: '40px', height: '40px', background: '#ECFDF5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px' }}>
-                                <FileText size={20} color="#059669" />
-                            </div>
-                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#111827' }}>Transkript</h3>
-                        </div>
-                        <div className={styles.transcriptContent}>
-                            {transcript.text && transcript.text.split('\n').map((para: string, i: number) => (
-                                para.trim() && <p key={i} className={styles.transcriptParagraph}>{para}</p>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };
 
     const handleDeleteSession = async () => {
         if (!session) return;
-        if (!window.confirm('Bu analizi silmek istediğinize emin misiniz?')) return;
+        setShowDeleteConfirm(true);
+    };
 
+    const confirmDeleteSession = async () => {
+        if (!session) return;
         try {
             await deleteSession(session.id);
             addToast({ type: 'success', title: 'Başarılı', message: 'Analiz silindi.' });
@@ -464,6 +402,8 @@ export const SessionDetail: React.FC = () => {
         } catch (error) {
             console.error('Error deleting session:', error);
             addToast({ type: 'error', title: 'Hata', message: 'Analiz silinemedi.' });
+        } finally {
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -511,13 +451,13 @@ export const SessionDetail: React.FC = () => {
             <div className={styles.metaRow}>
                 {/* Status Badge */}
                 <span className={`${styles.subjectBadge} ${session.status === 'recorded' ? styles.badgeRecorded :
-                        session.status === 'transcribed' ? styles.badgeTranscribed :
-                            session.status === 'completed' ? styles.badgeCompleted :
-                                styles.badgeDefault
+                    session.status === 'transcribed' ? styles.badgeTranscribed :
+                        session.status === 'completed' ? styles.badgeCompleted :
+                            styles.badgeDefault
                     }`} style={{ marginRight: '8px' }}>
                     {session.status === 'recorded' ? 'KAYITLI' :
-                        session.status === 'transcribed' ? 'YAZIYA DÖKÜLDÜ' :
-                            session.status === 'completed' ? 'TAMAMLANDI' : session.status}
+                        session.status === 'transcribed' ? 'ANALİZ EDİLDİ' :
+                            session.status === 'completed' ? 'TAMAMLANDI' : session.status.toUpperCase()}
                 </span>
 
                 <span className={styles.subjectBadge}>
@@ -617,6 +557,16 @@ export const SessionDetail: React.FC = () => {
             )}
 
             {(processingStep === 'completed' || analysis) && renderResults()}
+
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={confirmDeleteSession}
+                title="Analizi Sil"
+                message="Bu analizi ve ilişkili tüm verileri silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+                confirmText="Sil"
+                isLoading={isLoading}
+            />
         </div>
     );
 };

@@ -17,6 +17,7 @@ import { Sessions, NewSession, SessionDetail } from './pages/teacher/sessions';
 import { QuizEdit, Quizzes } from './pages/teacher/quizzes';
 import { QuizSubmissions } from './pages/teacher/quizzes/QuizSubmissions';
 import { Reports } from './pages/teacher/Reports';
+import { StudentDashboard } from './pages/student/Dashboard';
 import StudentQuizPlayer from './pages/student/StudentQuizPlayer';
 import { StudentQuizList } from './pages/student/StudentQuizList';
 import { StudentQuizResult } from './pages/student/StudentQuizResult';
@@ -154,7 +155,7 @@ export const App: React.FC = () => {
             path={ROUTES.STUDENT.DASHBOARD}
             element={
               <ProtectedRoute allowedRoles={['student']}>
-                <PlaceholderPage title="Öğrenci Paneli" />
+                <StudentDashboard />
               </ProtectedRoute>
             }
           />

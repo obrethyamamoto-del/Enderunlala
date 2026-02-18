@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button, Loader } from '../../../components/common';
-import { QuizEditor, QuizPreviewModal } from '../../../components/quiz';
+import { QuizEditor, QuizPreviewModal, PublishQuizModal } from '../../../components/quiz';
 import { getQuiz, updateQuiz, createQuiz, publishQuiz } from '../../../services/quizService';
 import { getSession } from '../../../services/sessionService';
 import { useAuthStore } from '../../../stores/authStore';
@@ -27,6 +27,8 @@ export const QuizEdit: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewQuiz, setPreviewQuiz] = useState<Quiz | null>(null);
+    const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
 
     // Yeni quiz mi yoksa mevcut mu? (pathname ile kontrol et çünkü /new route'u :id içermiyor)
     const isNewQuiz = location.pathname.endsWith('/new') || !id;
@@ -109,6 +111,7 @@ export const QuizEdit: React.FC = () => {
                     sessionId: sessionId || undefined,
                     questions: updatedQuiz.questions,
                     settings: updatedQuiz.settings,
+                    classIds: updatedQuiz.classIds,
                 });
 
                 setQuiz(created);
@@ -123,6 +126,7 @@ export const QuizEdit: React.FC = () => {
                     description: updatedQuiz.description,
                     questions: updatedQuiz.questions,
                     settings: updatedQuiz.settings,
+                    classIds: updatedQuiz.classIds,
                 });
 
                 setQuiz(updatedQuiz);
@@ -137,8 +141,33 @@ export const QuizEdit: React.FC = () => {
     }, [user, isNewQuiz, id, sessionId, addToast, navigate]);
 
     // Publish quiz
-    const handlePublish = useCallback(async () => {
+    const handlePublish = useCallback(async (classIds: string[]) => {
         if (!quiz || isNewQuiz || !id) {
+            addToast({ type: 'warning', title: 'Uyarı', message: 'Önce quiz\'i kaydedin.' });
+            return;
+        }
+
+        try {
+            setIsPublishing(true);
+            // Burada API'nin classIds bilgisini de aldığını varsayıyoruz
+            // Eğer mevcut publishQuiz sadece ID alıyorsa, updateQuiz ile sınıfları güncelleyip sonra publish edebiliriz
+            await updateQuiz(id, { classIds });
+            await publishQuiz(id);
+
+            setQuiz(prev => prev ? { ...prev, status: 'published', publishedAt: new Date(), classIds } : null);
+            addToast({ type: 'success', title: 'Yayınlandı!', message: 'Quiz seçilen sınıflara gönderildi.' });
+            setIsPublishModalOpen(false);
+        } catch (error) {
+            console.error('Error publishing quiz:', error);
+            addToast({ type: 'error', title: 'Hata', message: 'Quiz yayınlanamadı.' });
+        } finally {
+            setIsPublishing(false);
+        }
+    }, [quiz, isNewQuiz, id, addToast]);
+
+    // Approve quiz
+    const handleApprove = useCallback(async () => {
+        if (!quiz || !id) {
             addToast({ type: 'warning', title: 'Uyarı', message: 'Önce quiz\'i kaydedin.' });
             return;
         }
@@ -149,14 +178,14 @@ export const QuizEdit: React.FC = () => {
         }
 
         try {
-            await publishQuiz(id);
-            setQuiz(prev => prev ? { ...prev, status: 'published', publishedAt: new Date() } : null);
-            addToast({ type: 'success', title: 'Yayınlandı!', message: 'Quiz öğrencilere gönderildi.' });
+            await updateQuiz(id, { status: 'approved' });
+            setQuiz(prev => prev ? { ...prev, status: 'approved' } : null);
+            addToast({ type: 'success', title: 'Onaylandı', message: 'Quiz onaylandı, yayınlamaya hazır.' });
         } catch (error) {
-            console.error('Error publishing quiz:', error);
-            addToast({ type: 'error', title: 'Hata', message: 'Quiz yayınlanamadı.' });
+            console.error('Error approving quiz:', error);
+            addToast({ type: 'error', title: 'Hata', message: 'Quiz onaylanamadı.' });
         }
-    }, [quiz, isNewQuiz, id, addToast]);
+    }, [quiz, id, addToast]);
 
     // Auth veya quiz yüklenirken spinner göster
     if (!isAuthInitialized || !user || isLoading && !quiz) {
@@ -196,7 +225,8 @@ export const QuizEdit: React.FC = () => {
                 <QuizEditor
                     quiz={quiz}
                     onSave={handleSave}
-                    onPublish={handlePublish}
+                    onPublish={() => setIsPublishModalOpen(true)}
+                    onApprove={handleApprove}
                     onGenerateWithAI={() => { }} // Internally handled by QuizEditor now
                     isLoading={isLoading}
                     onPreview={(currentQuiz) => {
@@ -231,6 +261,16 @@ export const QuizEdit: React.FC = () => {
                             return { ...prev, questions: updatedQuestions };
                         });
                     }}
+                />
+            )}
+            {isPublishModalOpen && quiz && (
+                <PublishQuizModal
+                    isOpen={isPublishModalOpen}
+                    onClose={() => setIsPublishModalOpen(false)}
+                    onPublish={handlePublish}
+                    quizTitle={quiz.title}
+                    assignedClasses={(user as any)?.assignedClasses || []}
+                    isLoading={isPublishing}
                 />
             )}
         </div>

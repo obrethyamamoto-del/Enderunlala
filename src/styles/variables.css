@@ -136,7 +136,7 @@
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 72px;
   --header-height: 56px;
-  --tabbar-height: 84px;
+
   /* iOS tab bar + safe area */
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --max-content-width: 1280px;
@@ -170,7 +170,7 @@
 @media (min-width: 1024px) {
   :root {
     --header-height: 64px;
-    --tabbar-height: 0px;
+
   }
 }
 

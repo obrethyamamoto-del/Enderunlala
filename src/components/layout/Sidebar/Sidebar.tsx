@@ -2,15 +2,14 @@ import React, { useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Mic,
-    BarChart3,
     Users,
     GraduationCap,
     Settings,
     LogOut,
     BookOpen,
     ClipboardCheck,
-    HelpCircle,
+    PieChart,
+    Wand2,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../config/firebase';
@@ -27,9 +26,9 @@ interface NavItem {
 
 const teacherNav: NavItem[] = [
     { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: ROUTES.TEACHER.DASHBOARD },
-    { label: 'AI Analiz', icon: <Mic size={20} />, path: ROUTES.TEACHER.SESSIONS },
-    { label: 'Quizlerim', icon: <HelpCircle size={20} />, path: ROUTES.TEACHER.QUIZZES },
-    { label: 'Raporlar', icon: <BarChart3 size={20} />, path: ROUTES.TEACHER.REPORTS },
+    { label: 'Üretim Atölyesi', icon: <Wand2 size={20} />, path: ROUTES.TEACHER.SESSIONS },
+    { label: 'Sınavlar', icon: <ClipboardCheck size={20} />, path: ROUTES.TEACHER.QUIZZES },
+    { label: 'Raporlar', icon: <PieChart size={20} />, path: ROUTES.TEACHER.REPORTS },
 ];
 
 const studentNav: NavItem[] = [
@@ -42,8 +41,8 @@ const adminNav: NavItem[] = [
     { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: ROUTES.ADMIN.DASHBOARD },
     { label: 'Öğretmenler', icon: <Users size={20} />, path: ROUTES.ADMIN.TEACHERS },
     { label: 'Öğrenciler', icon: <GraduationCap size={20} />, path: ROUTES.ADMIN.STUDENTS },
-    { label: 'Tüm AI Analizler', icon: <Mic size={20} />, path: ROUTES.ADMIN.SESSIONS },
-    { label: 'Raporlar', icon: <BarChart3 size={20} />, path: ROUTES.ADMIN.REPORTS },
+    { label: 'Tüm Üretimler', icon: <Wand2 size={20} />, path: ROUTES.ADMIN.SESSIONS },
+    { label: 'Raporlar', icon: <PieChart size={20} />, path: ROUTES.ADMIN.REPORTS },
     { label: 'Ayarlar', icon: <Settings size={20} />, path: ROUTES.ADMIN.SETTINGS },
 ];
 
@@ -115,6 +114,7 @@ export const Sidebar: React.FC = () => {
                             <li key={item.path}>
                                 <NavLink
                                     to={item.path}
+                                    end
                                     className={({ isActive }) =>
                                         `${styles.navItem} ${isActive ? styles.active : ''}`
                                     }

@@ -402,7 +402,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
                 errorMessage = 'Mikrofon istenen özellikleri desteklemiyor. Farklı bir mikrofon deneyin.';
             }
 
-            setState(prev => ({ ...prev, error: errorMessage }));
+            setState(prev => ({ ...prev, error: `${errorMessage} (${error.name || error.message})` }));
         }
     }, [state.audioUrl, startTimer, startIDBTimers, flushChunksToIDB, saveMetaToIDB]);
 

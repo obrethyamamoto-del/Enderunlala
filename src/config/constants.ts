@@ -50,9 +50,6 @@ export type SubmissionStatus = (typeof SUBMISSION_STATUS)[keyof typeof SUBMISSIO
 export const QUESTION_TYPES = {
     MULTIPLE_CHOICE: 'multiple_choice',
     TRUE_FALSE: 'true_false',
-    OPEN_ENDED: 'open_ended',
-    MATCHING: 'matching',
-    FILL_BLANK: 'fill_blank',
 } as const;
 
 export type QuestionType = (typeof QUESTION_TYPES)[keyof typeof QUESTION_TYPES];
