@@ -9,6 +9,7 @@ import { ROUTES } from '../../config/routes';
 import type { Session, Teacher } from '../../types';
 import type { Quiz } from '../../types/quiz';
 import { ClassManagementModal } from '../../components/teacher/ClassManagementModal';
+import { DataGenerator } from '../../components/dev/DataGenerator';
 import styles from './Dashboard.module.css';
 
 export const TeacherDashboard: React.FC = () => {
@@ -147,11 +148,12 @@ export const TeacherDashboard: React.FC = () => {
         <div className={styles.page}>
             <div className={styles.header}>
                 <div className={styles.headerTitle}>
-                    <h1 className={styles.greeting}>Merhaba, {user?.displayName || 'Öğretmenim'}</h1>
+                    <h1 className={styles.greeting}>Merhaba, <span className={styles.teacherName}>{user?.displayName || 'Öğretmenim'}</span></h1>
                     <p className={styles.subtitle}>İşte bugünkü durumunuz ve son aktiviteleriniz.</p>
                 </div>
 
                 <div className={styles.contextBar}>
+                    {/* ... (keep existing context items) */}
                     <div className={styles.contextItem}>
                         <label className={styles.contextLabel}>KURUM SEÇİN</label>
                         <Select
@@ -292,6 +294,8 @@ export const TeacherDashboard: React.FC = () => {
                 onDeleteClass={handleDeleteClass}
                 onUpdateClass={handleUpdateClass}
             />
+
+            <DataGenerator />
         </div>
     );
 };

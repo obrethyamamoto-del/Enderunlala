@@ -1,429 +1,641 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Users,
-    GraduationCap,
     ChevronRight,
-    TrendingUp,
-    Award,
     FileText,
-    Search,
     ArrowLeft,
-    BookOpen,
     XCircle,
     Info,
-    BarChart2,
-    Layers
+    Calendar,
+    CheckCircle2,
+    X,
+    Check,
+    School,
+    BarChart3,
+    User2,
+    ClipboardList,
+    BarChart2
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { getQuizzesByTeacher, getQuizSubmissions } from '../../services/quizService';
 import { getAllStudents } from '../../services/userService';
-import { Loader, Input, Card, Button } from '../../components/common';
+import { Loader, Card, Button, Select } from '../../components/common';
 import type { Teacher, AppUser } from '../../types';
 import type { Quiz, QuizSubmission } from '../../types/quiz';
 import styles from './Reports.module.css';
+import { DataGenerator } from '../../components/dev/DataGenerator';
 
-type TabType = 'classes' | 'students' | 'subjects';
-type ViewType = 'main' | 'class_detail' | 'quiz_detail';
+type ViewType = 'classes' | 'class_detail' | 'quiz_detail' | 'student_detail';
 
 export const Reports: React.FC = () => {
     const user = useAuthStore((state) => state.user) as Teacher;
     const addToast = useUIStore((state) => state.addToast);
 
     // Navigation State
-    const [view, setView] = useState<ViewType>('main');
+    const [view, setView] = useState<ViewType>('classes');
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
+    const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+    const [activeClassFilter, setActiveClassFilter] = useState<string>('all');
 
     const [isLoading, setIsLoading] = useState(true);
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [allSubmissions, setAllSubmissions] = useState<QuizSubmission[]>([]);
     const [students, setStudents] = useState<AppUser[]>([]);
-    const [activeTab, setActiveTab] = useState<TabType>('classes');
-    const [searchTerm, setSearchTerm] = useState('');
+
+    // Interaction State
+    const [rankingOpen, setRankingOpen] = useState(true);
+    const [analysisOpen, setAnalysisOpen] = useState(true);
+
+    // Data Fetching
+    const fetchData = async () => {
+        if (!user) return;
+        setIsLoading(true);
+        try {
+            const [fetchedQuizzes, fetchedStudents] = await Promise.all([
+                getQuizzesByTeacher(user.id),
+                getAllStudents()
+            ]);
+
+            setQuizzes(fetchedQuizzes);
+            setStudents(fetchedStudents);
+
+            const relevantQuizIds = fetchedQuizzes
+                .filter(q => q.status === 'published' || q.status === 'closed')
+                .map(q => q.id);
+
+            const submissionsPromises = relevantQuizIds.map(id => getQuizSubmissions(id));
+            const submissionsResults = await Promise.all(submissionsPromises);
+
+            const combinedSubmissions = submissionsResults.flat();
+            setAllSubmissions(combinedSubmissions);
+
+        } catch (error) {
+            console.error('Error fetching reports data:', error);
+            addToast({ type: 'error', title: 'Hata', message: 'Rapor verileri yüklenemedi.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (!user) return;
-            try {
-                setIsLoading(true);
-                const [fetchedQuizzes, fetchedStudents] = await Promise.all([
-                    getQuizzesByTeacher(user.id),
-                    getAllStudents()
-                ]);
-
-                setQuizzes(fetchedQuizzes);
-                setStudents(fetchedStudents);
-
-                const publishedQuizIds = fetchedQuizzes
-                    .filter(q => q.status === 'published')
-                    .map(q => q.id);
-
-                const submissionsPromises = publishedQuizIds.map(id => getQuizSubmissions(id));
-                const submissionsResults = await Promise.all(submissionsPromises);
-
-                const combinedSubmissions = submissionsResults.flat();
-                setAllSubmissions(combinedSubmissions);
-
-            } catch (error) {
-                console.error('Error fetching reports data:', error);
-                addToast({ type: 'error', title: 'Hata', message: 'Rapor verileri yüklenemedi.' });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchData();
     }, [user, addToast]);
 
-    // --- Statistics Aggregation ---
-
-    const stats = useMemo(() => {
-        const totalQuizzes = quizzes.filter(q => q.status === 'published').length;
-        const totalSubmissions = allSubmissions.length;
-
-        const avgSuccess = totalSubmissions > 0
-            ? Math.round(allSubmissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / totalSubmissions)
-            : 0;
-
-        const classStats: Record<string, { totalScore: number, count: number }> = {};
-        allSubmissions.forEach(sub => {
-            const quiz = quizzes.find(q => q.id === sub.quizId);
-            const className = quiz?.classId || 'Genel';
-            if (!classStats[className]) classStats[className] = { totalScore: 0, count: 0 };
-            classStats[className].totalScore += (sub.percentage || 0);
-            classStats[className].count += 1;
-        });
-
-        let topClass = '-';
-        let maxAvg = -1;
-        Object.entries(classStats).forEach(([className, data]) => {
-            const avg = data.totalScore / data.count;
-            if (avg > maxAvg) {
-                maxAvg = avg;
-                topClass = className;
-            }
-        });
-
-        return [
-            { label: 'Toplam Sınav', value: totalQuizzes.toString(), icon: <FileText size={24} />, color: 'primary' },
-            { label: 'Ortalama Başarı', value: `%${avgSuccess}`, icon: <TrendingUp size={24} />, color: 'success' },
-            { label: 'En Başarılı Sınıf', value: topClass, icon: <Award size={24} />, color: 'accent' },
-            { label: 'Toplam Katılım', value: totalSubmissions.toString(), icon: <Users size={24} />, color: 'warning' }
-        ];
-    }, [quizzes, allSubmissions]);
-
-    // --- Detail Data Logics ---
-
-    const classReports = useMemo(() => {
-        const reportMap: Record<string, { name: string, avgScore: number, totalSubmissions: number, quizCount: number }> = {};
-        (user?.assignedClasses || []).forEach(cls => {
-            reportMap[cls] = { name: cls, avgScore: 0, totalSubmissions: 0, quizCount: 0 };
-        });
-        allSubmissions.forEach(sub => {
-            const quiz = quizzes.find(q => q.id === sub.quizId);
-            const className = quiz?.classId || 'Genel';
-            if (!reportMap[className]) reportMap[className] = { name: className, avgScore: 0, totalSubmissions: 0, quizCount: 0 };
-            reportMap[className].avgScore += (sub.percentage || 0);
-            reportMap[className].totalSubmissions += 1;
-        });
-        Object.keys(reportMap).forEach(key => {
-            const item = reportMap[key];
-            if (item.totalSubmissions > 0) item.avgScore = Math.round(item.avgScore / item.totalSubmissions);
-            item.quizCount = quizzes.filter(q => q.classId === key && q.status === 'published').length;
-        });
-        return Object.values(reportMap).filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).sort((a, b) => b.avgScore - a.avgScore);
-    }, [allSubmissions, quizzes, user, searchTerm]);
-
-    const studentReports = useMemo(() => {
-        const reportMap: Record<string, { id: string, name: string, avgScore: number, totalSubmissions: number }> = {};
-        allSubmissions.forEach(sub => {
-            const studentId = sub.studentId;
-            if (!reportMap[studentId]) {
-                const student = students.find(s => s.id === studentId);
-                reportMap[studentId] = { id: studentId, name: student?.displayName || 'Bilinmeyen Öğrenci', avgScore: 0, totalSubmissions: 0 };
-            }
-            reportMap[studentId].avgScore += (sub.percentage || 0);
-            reportMap[studentId].totalSubmissions += 1;
-        });
-        return Object.values(reportMap).map(item => ({ ...item, avgScore: item.totalSubmissions > 0 ? Math.round(item.avgScore / item.totalSubmissions) : 0 })).filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).sort((a, b) => b.avgScore - a.avgScore);
-    }, [allSubmissions, students, searchTerm]);
-
-    const subjectReports = useMemo(() => {
-        const reportMap: Record<string, { name: string, avgScore: number, totalSubmissions: number, quizCount: number }> = {};
-        allSubmissions.forEach(sub => {
-            const quiz = quizzes.find(q => q.id === sub.quizId);
-            const subject = quiz?.subject || (quiz?.title.includes('-') ? quiz?.title.split('-')[0].trim() : 'Genel');
-            if (!reportMap[subject!]) reportMap[subject!] = { name: subject!, avgScore: 0, totalSubmissions: 0, quizCount: 0 };
-            reportMap[subject!].avgScore += (sub.percentage || 0);
-            reportMap[subject!].totalSubmissions += 1;
-        });
-        Object.keys(reportMap).forEach(key => {
-            const item = reportMap[key];
-            if (item.totalSubmissions > 0) item.avgScore = Math.round(item.avgScore / item.totalSubmissions);
-            item.quizCount = new Set(quizzes.filter(q => (q.subject === key || (q.title.includes('-') && q.title.split('-')[0].trim() === key)) && q.status === 'published').map(q => q.id)).size;
-        });
-        return Object.values(reportMap).filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).sort((a, b) => b.avgScore - a.avgScore);
-    }, [allSubmissions, quizzes, searchTerm]);
-
-    const quizzesInClass = useMemo(() => {
-        if (!selectedClassId) return [];
-        return quizzes.filter(q => q.classId === selectedClassId && q.status === 'published').map(quiz => {
-            const subs = allSubmissions.filter(s => s.quizId === quiz.id);
-            const avg = subs.length > 0 ? Math.round(subs.reduce((acc, s) => acc + (s.percentage || 0), 0) / subs.length) : 0;
-            return { ...quiz, avgScore: avg, submissionCount: subs.length };
-        });
-    }, [quizzes, allSubmissions, selectedClassId]);
-
-    const quizDetailStats = useMemo(() => {
-        if (!selectedQuizId) return null;
-        const quiz = quizzes.find(q => q.id === selectedQuizId);
-        const subs = allSubmissions.filter(s => s.quizId === selectedQuizId);
-        if (!quiz || subs.length === 0) return { quiz, submissions: subs, questionAnalysis: [] };
-
-        const questionAnalysis = quiz.questions.map(question => {
-            let correctCount = 0;
-            subs.forEach(sub => {
-                const answer = sub.answers.find(a => a.questionId === question.id);
-                if (answer?.isCorrect) correctCount++;
-            });
-            return {
-                id: question.id,
-                text: question.question,
-                correctPercentage: Math.round((correctCount / subs.length) * 100),
-                total: subs.length,
-                correct: correctCount
-            };
-        });
-
-        return { quiz, submissions: subs, questionAnalysis };
-    }, [quizzes, allSubmissions, selectedQuizId]);
-
-    // --- Render Helpers ---
-
+    // --- Helper Functions ---
     const getScoreColor = (score: number) => {
         if (score >= 85) return '#10B981';
         if (score >= 60) return '#F59E0B';
         return '#EF4444';
     };
 
-    if (isLoading) return <div className={styles.page}><div className={styles.loadingState}><Loader size="lg" /></div></div>;
+    const formatDate = (date: Date | any) => {
+        if (!date) return '-';
+        const d = date instanceof Date ? date : date.toDate();
+        return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+    };
 
-    // --- Main Dashboard View ---
-    const renderMainView = () => (
-        <>
-            <div className={styles.statsGrid}>
-                {stats.map((stat, index) => (
-                    <div key={index} className={`${styles.statCard} ${styles[stat.color]}`}>
-                        <div className={styles.statIconWrapper}>{stat.icon}</div>
-                        <div className={styles.statInfo}><span className={styles.statValue}>{stat.value}</span><span className={styles.statLabel}>{stat.label}</span></div>
-                        <div className={styles.statBgIcon}>{stat.icon}</div>
+    // --- VIEW 1: CLASS LIST ---
+    const classListParams = useMemo(() => {
+        const classes = user?.assignedClasses || [];
+        const derivedClasses = Array.from(new Set(quizzes.map(q => q.classId || 'Genel')));
+        let classList = classes.length > 0 ? classes : derivedClasses;
+
+        if (activeClassFilter !== 'all') {
+            classList = classList.filter(c => c === activeClassFilter);
+        }
+
+        return classList.map(cls => {
+            const normC = cls.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+            const classQuizzes = quizzes.filter(q => {
+                const normQ = q.classId?.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || '';
+                const isMatch = q.classId === cls || (normQ && normQ === normC);
+                return isMatch && (q.status === 'published' || q.status === 'closed');
+            });
+
+            const classSubmissions = allSubmissions.filter(s => {
+                const quiz = quizzes.find(q => q.id === s.quizId);
+                const normQ = quiz?.classId?.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || '';
+                return quiz?.classId === cls || (normQ && normQ === normC);
+            });
+
+            const avgScore = classSubmissions.length > 0
+                ? Math.round(classSubmissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / classSubmissions.length)
+                : 0;
+
+            const studentCount = students.filter(s => {
+                const sAny = s as any;
+                const studentClass = sAny.classId || sAny.class || '';
+                if (studentClass === cls) return true;
+                const normS = studentClass.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                return normS && normS === normC;
+            }).length;
+
+            return {
+                name: cls,
+                quizCount: classQuizzes.length,
+                submissionCount: classSubmissions.length,
+                avgScore,
+                studentCount
+            };
+        }).sort((a, b) => b.avgScore - a.avgScore);
+    }, [user, quizzes, allSubmissions, students, activeClassFilter]);
+
+    const renderClassesView = () => (
+        <div className={styles.animateFadeIn}>
+            <div className={styles.header}>
+                <div className={styles.headerTitle}>
+                    <h1 className={styles.greeting}>Merhaba, <span className={styles.teacherName}>{user?.displayName || 'Öğretmenim'}</span></h1>
+                    <p className={styles.subtitle}>İşte bugünkü durumunuz ve son aktiviteleriniz.</p>
+                </div>
+
+                <div className={styles.contextBar}>
+                    <div className={styles.contextItem}>
+                        <label className={styles.contextLabel}>KURUM SEÇİN</label>
+                        <Select
+                            options={[{ value: 'enderun', label: 'Enderun Koleji Merkez' }]}
+                            value="enderun"
+                            onChange={() => { }}
+                            icon={<School size={18} />}
+                        />
                     </div>
-                ))}
-            </div>
 
-            <div className={styles.tabs}>
-                <button className={`${styles.tab} ${activeTab === 'classes' ? styles.active : ''}`} onClick={() => setActiveTab('classes')}>Sınıf Bazlı Analiz</button>
-                <button className={`${styles.tab} ${activeTab === 'subjects' ? styles.active : ''}`} onClick={() => setActiveTab('subjects')}>Branş Başarısı</button>
-                <button className={`${styles.tab} ${activeTab === 'students' ? styles.active : ''}`} onClick={() => setActiveTab('students')}>Genel Öğrenci Listesi</button>
-            </div>
-
-            <div style={{ marginBottom: '24px', maxWidth: '400px' }}><Input placeholder="Arama yapın..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} leftIcon={<Search size={18} />} /></div>
-
-            <div className={styles.listContainer}>
-                {activeTab === 'classes' && classReports.map((report, idx) => (
-                    <div key={idx} className={styles.reportItem} onClick={() => { setSelectedClassId(report.name); setView('class_detail'); setSearchTerm(''); }}>
-                        <div className={styles.itemIcon}><GraduationCap size={24} /></div>
-                        <div className={styles.itemMain}>
-                            <h3 className={styles.itemName}>{report.name}</h3>
-                            <div className={styles.itemMeta}><span>{report.quizCount} Aktif Sınav</span><span>•</span><span>{report.totalSubmissions} Katılım</span></div>
-                        </div>
-                        <div className={styles.scoreWrapper}>
-                            <div className={styles.scoreValue}>%{report.avgScore} Başarı</div>
-                            <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${report.avgScore}%`, backgroundColor: getScoreColor(report.avgScore) }} /></div>
-                        </div>
-                        <ChevronRight size={20} className={styles.itemArrow} />
+                    <div className={styles.contextItem}>
+                        <label className={styles.contextLabel}>AKTİF SINIF</label>
+                        <Select
+                            options={[
+                                { value: 'all', label: 'Tüm Sınıflar' },
+                                ...(user?.assignedClasses?.map(cls => ({ value: cls, label: cls })) || [])
+                            ]}
+                            value={activeClassFilter}
+                            onChange={(val) => setActiveClassFilter(val)}
+                            placeholder="Sınıf Seçin"
+                        />
                     </div>
-                ))}
-
-                {activeTab === 'subjects' && subjectReports.map((report, idx) => (
-                    <div key={idx} className={styles.reportItem}>
-                        <div className={styles.itemIcon}><Layers size={24} /></div>
-                        <div className={styles.itemMain}>
-                            <h3 className={styles.itemName}>{report.name}</h3>
-                            <div className={styles.itemMeta}><span>{report.quizCount} Branş Sınavı</span><span>•</span><span>{report.totalSubmissions} Toplam Çözüm</span></div>
-                        </div>
-                        <div className={styles.scoreWrapper}>
-                            <div className={styles.scoreValue}>%{report.avgScore} Ortalama</div>
-                            <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${report.avgScore}%`, backgroundColor: getScoreColor(report.avgScore) }} /></div>
-                        </div>
-                        <ChevronRight size={20} className={styles.itemArrow} />
-                    </div>
-                ))}
-
-                {activeTab === 'students' && studentReports.map((report) => (
-                    <div key={report.id} className={styles.reportItem}>
-                        <div className={styles.itemIcon}><Users size={24} /></div>
-                        <div className={styles.itemMain}>
-                            <h3 className={styles.itemName}>{report.name}</h3>
-                            <div className={styles.itemMeta}><span>{report.totalSubmissions} Tamamlanan Sınav</span></div>
-                        </div>
-                        <div className={styles.scoreWrapper}>
-                            <div className={styles.scoreValue}>%{report.avgScore} Başarı</div>
-                            <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${report.avgScore}%`, backgroundColor: getScoreColor(report.avgScore) }} /></div>
-                        </div>
-                        <ChevronRight size={20} className={styles.itemArrow} />
-                    </div>
-                ))}
-            </div>
-        </>
-    );
-
-    // --- Class Detail View (Quizzes in Class) ---
-    const renderClassDetailView = () => (
-        <div className={styles.detailView}>
-            <div className={styles.viewHeader}>
-                <Button variant="ghost" leftIcon={<ArrowLeft size={18} />} onClick={() => setView('main')}>Sınıflara Dön</Button>
-                <div className={styles.viewHeaderText}>
-                    <h2 className={styles.viewTitle}>{selectedClassId} Sınıfı Analizi</h2>
-                    <p className={styles.viewSubtitle}>Bu sınıfa ait yayınlanmış sınavlar ve genel performans.</p>
                 </div>
             </div>
 
-            <div className={styles.listContainer}>
-                {quizzesInClass.length > 0 ? quizzesInClass.map(quiz => (
-                    <div key={quiz.id} className={styles.reportItem} onClick={() => { setSelectedQuizId(quiz.id); setView('quiz_detail'); }}>
-                        <div className={styles.itemIcon}><BookOpen size={24} /></div>
-                        <div className={styles.itemMain}>
-                            <h3 className={styles.itemName}>{quiz.title.includes('-') ? quiz.title.split('-').slice(1).join('-').trim() : quiz.title}</h3>
-                            <div className={styles.itemMeta}><span>{quiz.subject}</span><span>•</span><span>{quiz.submissionCount} Öğrenci Çözdü</span></div>
+            <div className={styles.gridContainer}>
+                {classListParams.map((cls, idx) => (
+                    <div
+                        key={idx}
+                        className={styles.classCard}
+                        onClick={() => { setSelectedClassId(cls.name); setView('class_detail'); }}
+                    >
+                        <div className={styles.classCardTop}>
+                            <h3 className={styles.className}>{cls.name}</h3>
+                            <div className={styles.cardIconBox}>
+                                <Users size={20} />
+                            </div>
                         </div>
-                        <div className={styles.scoreWrapper}>
-                            <div className={styles.scoreValue}>%{quiz.avgScore} Sınıf Ort.</div>
-                            <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${quiz.avgScore}%`, backgroundColor: getScoreColor(quiz.avgScore) }} /></div>
+
+                        <div className={styles.cardStatsRow}>
+                            <div className={styles.statBlock}>
+                                <div className={styles.statHead}>
+                                    <BarChart3 size={14} />
+                                    <span>GENEL ORT.</span>
+                                </div>
+                                <div className={styles.statValue}>
+                                    <span className={styles.scoreBadge} style={{
+                                        backgroundColor: `${getScoreColor(cls.avgScore)}15`,
+                                        color: getScoreColor(cls.avgScore)
+                                    }}>
+                                        %{cls.avgScore}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className={styles.statBlock}>
+                                <div className={styles.statHead}>
+                                    <User2 size={14} />
+                                    <span>MEVCUT</span>
+                                </div>
+                                <div className={styles.statValue}>
+                                    {cls.studentCount} Öğr.
+                                </div>
+                            </div>
+                            <div className={styles.statBlock}>
+                                <div className={styles.statHead}>
+                                    <ClipboardList size={14} />
+                                    <span>SINAV</span>
+                                </div>
+                                <div className={styles.statValue}>
+                                    {cls.quizCount} Adet
+                                </div>
+                            </div>
                         </div>
-                        <ChevronRight size={20} className={styles.itemArrow} />
+
+                        <button className={styles.viewDetailsBtn}>
+                            DETAYLARI GÖRÜNTÜLE
+                        </button>
                     </div>
-                )) : (
-                    <div className={styles.emptyState}><p>Bu sınıfa henüz bir sınav atanmamış.</p></div>
-                )}
+                ))}
+            </div>
+
+            {classListParams.length === 0 && (
+                <div className={styles.emptyState}>
+                    <p>Henüz atanmış bir sınıfınız veya sınavınız bulunmuyor.</p>
+                </div>
+            )}
+
+            <div style={{ marginTop: '40px' }}>
+                <DataGenerator onDataGenerated={fetchData} />
             </div>
         </div>
     );
 
-    // --- Quiz Detail View (Question Analysis & Student List) ---
-    const renderQuizDetailView = () => {
-        if (!quizDetailStats) return null;
-        const { quiz, submissions, questionAnalysis } = quizDetailStats;
+    // --- VIEW 2: CLASS DETAIL (QUIZ LIST) ---
+    const classDetailParams = useMemo(() => {
+        if (!selectedClassId) return null;
 
-        const avgPercentage = submissions.length > 0
-            ? Math.round(submissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / submissions.length)
+        const classQuizzes = quizzes.filter(q => {
+            if (q.status !== 'published' && q.status !== 'closed') return false;
+            const normQ = q.classId?.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || '';
+            const normS = selectedClassId.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+            if (q.classId === selectedClassId || (normQ && normQ === normS)) return true;
+
+            const hasSubmissionFromClass = allSubmissions.some(s =>
+                s.quizId === q.id &&
+                (students.find(st => st.id === s.studentId) as any)?.classId === selectedClassId
+            );
+            return hasSubmissionFromClass;
+        }).map(quiz => {
+            const subs = allSubmissions.filter(s => s.quizId === quiz.id);
+            const avg = subs.length > 0
+                ? Math.round(subs.reduce((acc, s) => acc + (s.percentage || 0), 0) / subs.length)
+                : 0;
+
+            return {
+                ...quiz,
+                avgScore: avg,
+                submissionCount: subs.length
+            };
+        });
+
+        const overallAvg = classQuizzes.length > 0
+            ? Math.round(classQuizzes.reduce((acc, q) => acc + q.avgScore, 0) / classQuizzes.length)
             : 0;
 
-        const lowPerformanceQuestions = questionAnalysis.filter(q => q.correctPercentage < 60);
+        return {
+            className: selectedClassId,
+            quizzes: classQuizzes,
+            overallAvg,
+            totalSubmissions: classQuizzes.reduce((acc, q) => acc + q.submissionCount, 0)
+        };
+    }, [selectedClassId, quizzes, allSubmissions, students]);
+
+    const renderClassDetailView = () => {
+        if (!classDetailParams) return null;
 
         return (
-            <div className={styles.detailView}>
-                <div className={styles.viewHeader}>
-                    <Button variant="ghost" leftIcon={<ArrowLeft size={18} />} onClick={() => setView('class_detail')}>Sınavlara Dön</Button>
-                    <div className={styles.viewHeaderText}>
-                        <h2 className={styles.viewTitle}>{quiz?.title} - Detaylı Analiz</h2>
-                        <p className={styles.viewSubtitle}>{selectedClassId} sınıfının bu sınavdaki performansı.</p>
+            <div className={styles.animateFadeIn}>
+                <div className={styles.breadcrumb}>
+                    <Button variant="ghost" size="sm" onClick={() => setView('classes')} leftIcon={<ArrowLeft size={16} />}>
+                        Sınıflara Dön
+                    </Button>
+                </div>
+
+                <div className={styles.detailHeader}>
+                    <div>
+                        <h1 className={styles.detailTitle}>{classDetailParams.className} Sınıfı</h1>
+                        <p className={styles.detailSubtitle}>Sınav bazlı performans analizi</p>
+                    </div>
+                    <div className={styles.headerStats}>
+                        <div className={styles.headerStatItem}>
+                            <span className={styles.hLabel}>Genel Başarı</span>
+                            <span className={styles.hValue} style={{ color: getScoreColor(classDetailParams.overallAvg) }}>
+                                %{classDetailParams.overallAvg}
+                            </span>
+                        </div>
+                        <div className={styles.headerStatItem}>
+                            <span className={styles.hLabel}>Toplam Sınav</span>
+                            <span className={styles.hValue}>{classDetailParams.quizzes.length}</span>
+                        </div>
                     </div>
                 </div>
 
-                <div className={styles.summaryRow}>
-                    <Card className={styles.summaryMiniCard}>
-                        <div className={styles.miniLabel}>Sınıf Ortalaması</div>
-                        <div className={styles.miniValue} style={{ color: getScoreColor(avgPercentage) }}>%{avgPercentage}</div>
-                    </Card>
-                    <Card className={styles.summaryMiniCard}>
-                        <div className={styles.miniLabel}>Katılım Oranı</div>
-                        <div className={styles.miniValue}>%{Math.round((submissions.length / students.filter(s => s.role === 'student').length) * 100)}</div>
-                    </Card>
-                    <Card className={styles.summaryMiniCard}>
-                        <div className={styles.miniLabel}>Kritik Soru Sayısı</div>
-                        <div className={styles.miniValue} style={{ color: lowPerformanceQuestions.length > 0 ? '#EF4444' : '#10B981' }}>{lowPerformanceQuestions.length}</div>
-                    </Card>
-                </div>
-
-                <Card className={styles.assessmentCard}>
-                    <div className={styles.cardHeader}>
-                        <Info size={18} />
-                        <h3>Genel Değerlendirme</h3>
-                    </div>
-                    <div className={styles.assessmentContent}>
-                        <p>
-                            Bu sınavda sınıf genelinde <strong>%{avgPercentage}</strong> başarı elde edilmiştir.
-                            {avgPercentage >= 80
-                                ? " Sınıfın konu hakimiyeti oldukça yüksektir. Tebrikler!"
-                                : avgPercentage >= 60
-                                    ? " Sınıf ortalama bir performans sergilemiştir, eksik kalınan noktalar üzerinde durulabilir."
-                                    : " Sınıf genelinde konuyla ilgili ciddi anlamda eksikler bulunmaktadır. Tekrar yapılması önerilir."}
-                        </p>
-                        {lowPerformanceQuestions.length > 0 && (
-                            <div className={styles.insightBox}>
-                                <strong>Dikkat Edilmesi Gereken Sorular:</strong>
-                                <span> {lowPerformanceQuestions.map((_, i) => `${i + 1}.`).join(', ')} numaralı sorularda başarı oranı düşük kalmıştır.</span>
-                            </div>
-                        )}
-                    </div>
-                </Card>
-
-                <div className={styles.analysisGrid}>
-                    {/* Question Analysis */}
-                    <Card className={styles.analysisCard}>
-                        <div className={styles.cardHeader}><BarChart2 size={18} /> <h3>Soru Analizi</h3></div>
-                        <div className={styles.questionList}>
-                            {questionAnalysis.map((q, idx) => (
-                                <div key={q.id} className={styles.questionStatItem}>
-                                    <div className={styles.qHeader}>
-                                        <span className={styles.qIndex}>{idx + 1}. Soru</span>
-                                        <span className={styles.qPercent}>%{q.correctPercentage} Doğru</span>
-                                    </div>
-                                    <div className={styles.qText}>{q.text}</div>
-                                    <div className={styles.qBar}><div className={styles.qFill} style={{ width: `${q.correctPercentage}%`, backgroundColor: getScoreColor(q.correctPercentage) }} /></div>
-                                    {q.correctPercentage < 40 && <div className={styles.qWarning}><XCircle size={14} /> Bu soru sınıfın çoğunluğu tarafından yanlış yapılmış. Sınıf içerisinde bu sorunun çözümünü tekrar anlatmanız faydalı olabilir.</div>}
+                <div className={styles.quizList}>
+                    {classDetailParams.quizzes.length > 0 ? (
+                        classDetailParams.quizzes.map(quiz => (
+                            <div
+                                key={quiz.id}
+                                className={styles.quizCard}
+                                onClick={() => { setSelectedQuizId(quiz.id); setView('quiz_detail'); }}
+                            >
+                                <div className={styles.quizIcon}>
+                                    <FileText size={24} />
                                 </div>
-                            ))}
-                        </div>
-                    </Card>
-
-                    {/* Student List in this Quiz */}
-                    <Card className={styles.analysisCard}>
-                        <div className={styles.cardHeader}><Users size={18} /> <h3>Öğrenci Performansları</h3></div>
-                        <div className={styles.studentSubList}>
-                            {submissions.map(sub => {
-                                const student = students.find(s => s.id === sub.studentId);
-                                return (
-                                    <div key={sub.id} className={styles.studentSubItem}>
-                                        <div className={styles.sInfo}>
-                                            <span className={styles.sName}>{student?.displayName || 'Bilinmeyen Öğrenci'}</span>
-                                            <span className={styles.sScore}>%{sub.percentage}</span>
-                                        </div>
-                                        <div className={styles.sBar}><div className={styles.sFill} style={{ width: `${sub.percentage}%`, backgroundColor: getScoreColor(sub.percentage || 0) }} /></div>
+                                <div className={styles.quizContent}>
+                                    <div className={styles.quizMainInfo}>
+                                        <h3 className={styles.quizTitle}>
+                                            {quiz.title.includes('-') ? quiz.title.split('-').slice(1).join('-').trim() : quiz.title}
+                                        </h3>
+                                        <span className={styles.quizDate}>
+                                            <Calendar size={14} />
+                                            {formatDate(quiz.createdAt)}
+                                        </span>
                                     </div>
-                                );
-                            })}
+                                    <div className={styles.quizMeta}>
+                                        <span className={styles.tag}>{quiz.subject}</span>
+                                    </div>
+                                </div>
+
+                                <div className={styles.quizStats}>
+                                    <div className={styles.qStat}>
+                                        <span className={styles.qLabel}>Katılım</span>
+                                        <span className={styles.qValue}>{quiz.submissionCount}</span>
+                                    </div>
+                                    <div className={styles.qStat}>
+                                        <span className={styles.qLabel}>Ortalama</span>
+                                        <div className={styles.scoreBadge} style={{
+                                            backgroundColor: `${getScoreColor(quiz.avgScore)}15`,
+                                            color: getScoreColor(quiz.avgScore)
+                                        }}>
+                                            %{quiz.avgScore}
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={20} className={styles.arrow} />
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className={styles.emptyState}>
+                            <p>Bu sınıfa ait yayınlanmış sınav bulunamadı.</p>
                         </div>
-                    </Card>
+                    )}
                 </div>
             </div>
         );
     };
 
-    return (
-        <div className={styles.page}>
-            <div className={styles.header}>
-                <div className={styles.headerTitle}>
-                    <h1 className={styles.greeting}>Akademik Raporlar ve Analizler</h1>
-                    <p className={styles.subtitle}>Sınav performansı, branş başarısı ve öğrenci gelişim istatistikleri.</p>
+    // --- VIEW 3: QUIZ DETAIL ---
+    const quizDetailParams = useMemo(() => {
+        if (!selectedQuizId) return null;
+        const quiz = quizzes.find(q => q.id === selectedQuizId);
+        const subs = allSubmissions.filter(s => s.quizId === selectedQuizId);
+
+        if (!quiz) return null;
+
+        const avgScore = subs.length > 0
+            ? Math.round(subs.reduce((acc, s) => acc + (s.percentage || 0), 0) / subs.length)
+            : 0;
+
+        const studentList = subs.map(sub => {
+            const student = students.find(s => s.id === sub.studentId);
+            return {
+                submission: sub,
+                studentName: student?.displayName || 'Bilinmeyen Öğrenci',
+                score: sub.percentage || 0
+            };
+        }).sort((a, b) => b.score - a.score);
+
+        const questionAnalysis = quiz.questions.map((q, idx) => {
+            let correctCount = 0;
+            subs.forEach(s => {
+                const ans = s.answers.find(a => a.questionId === q.id);
+                if (ans?.isCorrect) correctCount++;
+            });
+            return {
+                ...q,
+                index: idx + 1,
+                correctPercentage: subs.length > 0 ? Math.round((correctCount / subs.length) * 100) : 0
+            };
+        });
+
+        const lowPerformanceParams = questionAnalysis.filter(q => q.correctPercentage < 50);
+
+        return {
+            quiz,
+            avgScore,
+            participation: subs.length,
+            studentList,
+            questionAnalysis,
+            lowPerformanceParams
+        };
+    }, [selectedQuizId, quizzes, allSubmissions, students]);
+
+    const renderQuizDetailView = () => {
+        if (!quizDetailParams) return null;
+        const { quiz, avgScore, studentList, questionAnalysis, lowPerformanceParams } = quizDetailParams;
+
+        return (
+            <div className={styles.animateFadeIn}>
+                <div className={styles.breadcrumb}>
+                    <Button variant="ghost" size="sm" onClick={() => setView('class_detail')} leftIcon={<ArrowLeft size={16} />}>
+                        {selectedClassId} Sınavlarına Dön
+                    </Button>
+                </div>
+
+                <div className={styles.detailHeader}>
+                    <div>
+                        <div className={styles.tagRow}>
+                            <span className={styles.tag}>{quiz.subject}</span>
+                            <span className={styles.dateTag}>{formatDate(quiz.createdAt)}</span>
+                        </div>
+                        <h1 className={styles.detailTitle}>{quiz.title}</h1>
+                    </div>
+
+                    <div className={styles.examScoreBig} style={{ color: getScoreColor(avgScore) }}>
+                        <div className={styles.scoreCircle}>
+                            %{avgScore}
+                        </div>
+                        <span>Sınıf Ortalaması</span>
+                    </div>
+                </div>
+
+                <div className={styles.reportGrid}>
+                    <div className={styles.colLeft}>
+                        <Card className={styles.sectionCard}>
+                            <div className={`${styles.cardHeader} ${styles.collapsibleHeader}`} onClick={() => setRankingOpen(!rankingOpen)}>
+                                <div className={styles.headerLeft}>
+                                    <Users size={20} />
+                                    <h3>Öğrenci Sıralaması</h3>
+                                </div>
+                                <ChevronRight size={20} style={{ transform: rankingOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                            </div>
+                            <div className={`${styles.collapsibleContent} ${rankingOpen ? styles.open : ''}`}>
+                                <div className={styles.studentTable}>
+                                    <div className={styles.tableHead}>
+                                        <span>Öğrenci</span>
+                                        <span>Puan</span>
+                                        <span>Detay</span>
+                                    </div>
+                                    <div className={styles.tableBody}>
+                                        {studentList.map((item, i) => (
+                                            <div
+                                                key={i}
+                                                className={styles.tableRow}
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={() => { setSelectedSubmissionId(item.submission.id); setView('student_detail'); }}
+                                            >
+                                                <div className={styles.stName}>
+                                                    <div className={styles.avatar}>{item.studentName.charAt(0)}</div>
+                                                    {item.studentName}
+                                                </div>
+                                                <div className={styles.stScore} style={{ color: getScoreColor(item.score) }}>
+                                                    {item.score}
+                                                </div>
+                                                <div className={styles.stDetail}>
+                                                    <ChevronRight size={16} color="#94a3b8" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {studentList.length === 0 && (
+                                            <div className={styles.emptyTable}>Henüz katılım yok.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+
+                    <div className={styles.colRight}>
+                        <Card className={styles.sectionCard}>
+                            <div className={`${styles.cardHeader} ${styles.collapsibleHeader}`} onClick={() => setAnalysisOpen(!analysisOpen)}>
+                                <div className={styles.headerLeft}>
+                                    <BarChart2 size={20} />
+                                    <h3>Soru Analizi</h3>
+                                </div>
+                                <ChevronRight size={20} style={{ transform: analysisOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                            </div>
+                            <div className={`${styles.collapsibleContent} ${analysisOpen ? styles.open : ''}`}>
+
+                                {lowPerformanceParams.length > 0 && (
+                                    <div className={styles.warningBox}>
+                                        <Info size={16} />
+                                        <span>
+                                            <strong>{lowPerformanceParams.length} soru</strong> sınıf genelinde %50'nin altında başarı aldı.
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className={styles.questionGrid}>
+                                    {questionAnalysis.map((q) => (
+                                        <div key={q.id} className={styles.qStatItem}>
+                                            <div className={styles.qTop}>
+                                                <span className={styles.qIdx}>Soru {q.index}</span>
+                                                <span className={styles.qPrc} style={{ color: getScoreColor(q.correctPercentage) }}>%{q.correctPercentage}</span>
+                                            </div>
+                                            <div className={styles.qProg}>
+                                                <div
+                                                    className={styles.qFill}
+                                                    style={{ width: `${q.correctPercentage}%`, backgroundColor: getScoreColor(q.correctPercentage) }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
                 </div>
             </div>
+        );
+    };
 
-            {view === 'main' && renderMainView()}
+    // --- VIEW 4: STUDENT DETAIL ---
+    const studentDetailParams = useMemo(() => {
+        if (!selectedSubmissionId || !selectedQuizId) return null;
+        const submission = allSubmissions.find(s => s.id === selectedSubmissionId);
+        const quiz = quizzes.find(q => q.id === selectedQuizId);
+        const student = students.find(s => s.id === submission?.studentId);
+        if (!submission || !quiz || !student) return null;
+        return { quiz, submission, student };
+    }, [selectedSubmissionId, selectedQuizId, allSubmissions, quizzes, students]);
+
+    const renderStudentDetailView = () => {
+        if (!studentDetailParams) return null;
+        const { quiz, submission, student } = studentDetailParams;
+
+        return (
+            <div className={styles.animateFadeIn}>
+                <div className={styles.breadcrumb}>
+                    <Button variant="ghost" size="sm" onClick={() => setView('quiz_detail')} leftIcon={<ArrowLeft size={16} />}>
+                        Genel Sonuçlara Dön
+                    </Button>
+                </div>
+
+                <div className={styles.detailHeader}>
+                    <div>
+                        <h1 className={styles.detailTitle}>{student.displayName}</h1>
+                        <p className={styles.detailSubtitle}>{quiz.title}</p>
+                    </div>
+                    <div className={styles.examScoreBig} style={{ color: getScoreColor(submission.percentage || 0) }}>
+                        <div className={styles.scoreCircle}>
+                            %{submission.percentage}
+                        </div>
+                        <span>Öğrenci Puanı</span>
+                    </div>
+                </div>
+
+                <div className={styles.questionsContainer}>
+                    {quiz.questions.map((q, idx) => {
+                        const answer = submission.answers.find(a => a.questionId === q.id);
+                        const isCorrect = answer?.isCorrect;
+
+                        return (
+                            <Card key={q.id} className={`${styles.questionResultCard} ${isCorrect ? styles.correctCard : styles.incorrectCard}`}>
+                                <div className={styles.qResultHeader}>
+                                    <span className={styles.qNumber}>Soru {idx + 1}</span>
+                                    {isCorrect ? (
+                                        <span className={styles.statusCorrect}><CheckCircle2 size={16} /> Doğru</span>
+                                    ) : (
+                                        <span className={styles.statusIncorrect}><XCircle size={16} /> Yanlış</span>
+                                    )}
+                                </div>
+                                <div className={styles.qText}>{q.question}</div>
+
+                                <div className={styles.optionsList}>
+                                    {q.type === 'multiple_choice' && (q as any).options.map((opt: any) => {
+                                        const isSelected = answer?.selectedOptionIds?.includes(opt.id);
+                                        const isCorrectOpt = opt.isCorrect;
+
+                                        let optionClass = styles.optionItem;
+                                        if (isSelected && isCorrectOpt) optionClass += ` ${styles.optCorrectSelected}`;
+                                        else if (isSelected && !isCorrectOpt) optionClass += ` ${styles.optWrongSelected}`;
+                                        else if (!isSelected && isCorrectOpt) optionClass += ` ${styles.optCorrectMissed}`;
+
+                                        return (
+                                            <div key={opt.id} className={optionClass}>
+                                                <div className={styles.optMarker}>
+                                                    {isSelected && isCorrectOpt && <Check size={14} />}
+                                                    {isSelected && !isCorrectOpt && <X size={14} />}
+                                                    {!isSelected && isCorrectOpt && <Check size={14} />}
+                                                </div>
+                                                {opt.text}
+                                            </div>
+                                        );
+                                    })}
+
+                                    {q.type === 'true_false' && (
+                                        <div className={styles.booleanResult}>
+                                            <div className={`${styles.optionItem} ${answer?.booleanAnswer === true ? (isCorrect ? styles.optCorrectSelected : styles.optWrongSelected) : ((q as any).correctAnswer === true ? styles.optCorrectMissed : '')}`}>
+                                                Doğru
+                                            </div>
+                                            <div className={`${styles.optionItem} ${answer?.booleanAnswer === false ? (isCorrect ? styles.optCorrectSelected : styles.optWrongSelected) : ((q as any).correctAnswer === false ? styles.optCorrectMissed : '')}`}>
+                                                Yanlış
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    if (isLoading) return <div className={styles.page}><div className={styles.loadingState}><Loader size="lg" /></div></div>;
+
+    return (
+        <div className={styles.page}>
+            {view === 'classes' && renderClassesView()}
             {view === 'class_detail' && renderClassDetailView()}
             {view === 'quiz_detail' && renderQuizDetailView()}
+            {view === 'student_detail' && renderStudentDetailView()}
         </div>
     );
 };

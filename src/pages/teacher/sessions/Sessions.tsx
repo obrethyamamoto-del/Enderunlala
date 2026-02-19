@@ -235,7 +235,7 @@ export const Sessions: React.FC = () => {
         <div className={styles.page}>
             <div className={styles.header}>
                 <div className={styles.headerTitle}>
-                    <h1 className={styles.title}>Merhaba, {user?.displayName || 'Öğretmenim'}</h1>
+                    <h1 className={styles.title}>Merhaba, <span className={styles.teacherName}>{user?.displayName || 'Öğretmenim'}</span></h1>
                     <p className={styles.subtitle}>İşte bugünkü durumunuz ve son aktiviteleriniz.</p>
                 </div>
 

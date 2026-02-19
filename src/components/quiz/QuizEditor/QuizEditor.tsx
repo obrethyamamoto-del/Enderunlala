@@ -426,9 +426,11 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
                                         {QUESTION_TYPE_LABELS[question.type]}
                                     </span>
                                 </div>
-                                <span className={styles.qTextPreview}>
-                                    {question.question || 'Soru metni girilmedi...'}
-                                </span>
+                                <div className={styles.qMainContent}>
+                                    <span className={styles.qTextPreview}>
+                                        {question.question || 'Soru metni girilmedi...'}
+                                    </span>
+                                </div>
                             </div>
 
                             <div className={styles.questionRight}>

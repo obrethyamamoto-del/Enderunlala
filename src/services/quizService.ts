@@ -514,17 +514,22 @@ export const gradeSubmission = async (
 export const getQuizSubmissions = async (quizId: string): Promise<QuizSubmission[]> => {
     const q = query(
         collection(db, SUBMISSIONS_COLLECTION),
-        where('quizId', '==', quizId),
-        orderBy('submittedAt', 'desc')
+        where('quizId', '==', quizId)
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const submissions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        startedAt: doc.data().startedAt?.toDate() || new Date(),
-        submittedAt: doc.data().submittedAt?.toDate(),
+        startedAt: toDate(doc.data().startedAt),
+        submittedAt: doc.data().submittedAt ? toDate(doc.data().submittedAt) : undefined,
     })) as QuizSubmission[];
+
+    return submissions.sort((a, b) => {
+        const timeA = a.submittedAt?.getTime() || 0;
+        const timeB = b.submittedAt?.getTime() || 0;
+        return timeB - timeA;
+    });
 };
 
 /**
