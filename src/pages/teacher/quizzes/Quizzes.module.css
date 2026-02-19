@@ -105,7 +105,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-primary);
+    color: #000000;
 }
 
 .quizInfo {
@@ -114,8 +114,18 @@
 
 .quizTitle {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--color-text-primary);
+    line-height: 1.4;
+}
+
+.quizMeta {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
 }
 
 .badge {
@@ -124,6 +134,8 @@
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .badgePublished {
@@ -139,6 +151,74 @@
 .badgeApproved {
     background-color: #FFF7ED;
     color: #F97316;
+}
+
+.badgeDefault {
+    background-color: var(--color-gray-100);
+    color: var(--color-text-tertiary);
+}
+
+.statusWrapper {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quizActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menuDropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 8px;
+    min-width: 140px;
+    z-index: 50;
+    border: 1px solid var(--color-gray-100);
+}
+
+.menuItem {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    display: block;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.menuItem:hover {
+    background-color: var(--color-gray-50);
+}
+
+.menuItemDanger {
+    color: var(--color-error) !important;
+}
+
+@media (max-width: 640px) {
+    .quizItem {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .quizActions {
+        margin-top: 12px;
+        justify-content: flex-end;
+        border-top: 1px solid var(--color-gray-50);
+        padding-top: 8px;
+    }
 }
 
 .menuBtn {

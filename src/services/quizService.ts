@@ -532,16 +532,4 @@ export const getQuizSubmissions = async (quizId: string): Promise<QuizSubmission
     });
 };
 
-/**
- * Reset all submissions for a student (DEBUG ONLY)
- */
-export const resetStudentSubmissions = async (studentId: string): Promise<void> => {
-    const q = query(
-        collection(db, SUBMISSIONS_COLLECTION),
-        where('studentId', '==', studentId)
-    );
 
-    const snapshot = await getDocs(q);
-    const deletePromises = snapshot.docs.map(document => deleteDoc(doc(db, SUBMISSIONS_COLLECTION, document.id)));
-    await Promise.all(deletePromises);
-};

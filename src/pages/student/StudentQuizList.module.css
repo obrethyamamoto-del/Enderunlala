@@ -35,6 +35,42 @@
     font-weight: 500;
 }
 
+.tabBar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    background: #F1F5F9;
+    padding: 6px;
+    border-radius: 16px;
+    width: fit-content;
+}
+
+.tabItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #64748B;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tabItem:hover {
+    color: #0F172A;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.tabActive {
+    background: white !important;
+    color: #8B5CF6 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
 .quizList {
     display: flex;
     flex-direction: column;
@@ -62,22 +98,22 @@
 }
 
 .itemActive {
-    background-color: #F0FDF4 !important;
-    border-color: #DCFCE7 !important;
+    background-color: white !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
 }
 
 .itemActive .quizIcon {
-    background-color: white !important;
+    background-color: #F0FDF4 !important;
     color: #10B981 !important;
 }
 
 .itemCompleted {
-    background-color: #EFF6FF !important;
-    border-color: #DBEAFE !important;
+    background-color: white !important;
+    border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
 .itemCompleted .quizIcon {
-    background-color: white !important;
+    background-color: #EFF6FF !important;
     color: #3B82F6 !important;
 }
 
@@ -225,18 +261,73 @@
     color: var(--color-text-tertiary);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    .page {
+        padding: var(--space-4);
+    }
+
+    .title {
+        font-size: 26px;
+    }
+
+    .tabBar {
+        width: 100%;
+        overflow-x: auto;
+        padding: 4px;
+        gap: 8px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .tabBar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tabItem {
+        padding: 8px 16px;
+        font-size: 13px;
+        white-space: nowrap;
+        flex: 1;
+        justify-content: center;
+    }
+
     .quizItem {
+        padding: 20px;
         flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-4);
+        align-items: stretch;
+        gap: 16px;
     }
 
-    .quizActions {
-        width: 100%;
+    .quizIcon {
+        width: 44px;
+        height: 44px;
     }
 
-    .quizActions button {
+    .quizTitle {
+        font-size: 16px;
+    }
+
+    .quizMeta {
+        flex-wrap: wrap;
+        gap: 8px 16px;
+    }
+
+    .startLink,
+    .completedLink {
         width: 100%;
+        justify-content: center;
+        background: #F8FAFC;
+        padding: 12px;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 22px;
+    }
+
+    .subtitle {
+        font-size: 14px;
     }
 }

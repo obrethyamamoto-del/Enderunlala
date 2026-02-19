@@ -434,7 +434,9 @@ export const Reports: React.FC = () => {
                             <span className={styles.tag}>{quiz.subject}</span>
                             <span className={styles.dateTag}>{formatDate(quiz.createdAt)}</span>
                         </div>
-                        <h1 className={styles.detailTitle}>{quiz.title}</h1>
+                        <h1 className={styles.detailTitle}>
+                            {quiz.title.includes('-') ? quiz.title.split('-').slice(1).join('-').trim() : quiz.title}
+                        </h1>
                     </div>
 
                     <div className={styles.examScoreBig} style={{ color: getScoreColor(avgScore) }}>
@@ -560,7 +562,9 @@ export const Reports: React.FC = () => {
                 <div className={styles.detailHeader}>
                     <div>
                         <h1 className={styles.detailTitle}>{student.displayName}</h1>
-                        <p className={styles.detailSubtitle}>{quiz.title}</p>
+                        <p className={styles.detailSubtitle}>
+                            {quiz.title.includes('-') ? quiz.title.split('-').slice(1).join('-').trim() : quiz.title}
+                        </p>
                     </div>
                     <div className={styles.examScoreBig} style={{ color: getScoreColor(submission.percentage || 0) }}>
                         <div className={styles.scoreCircle}>
