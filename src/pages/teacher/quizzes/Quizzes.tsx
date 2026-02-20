@@ -8,7 +8,7 @@ import {
     CheckCircle
 } from 'lucide-react';
 import { Loader, Select, ConfirmModal } from '../../../components/common';
-import { getQuizzesByTeacher, deleteQuiz } from '../../../services/quizService';
+import { getQuizzesByTeacher, deleteQuiz, getQuizSubmissions } from '../../../services/quizService';
 import { useAuthStore } from '../../../stores/authStore';
 import { useUIStore } from '../../../stores/uiStore';
 import { ROUTES } from '../../../config/routes';
@@ -46,6 +46,8 @@ export const Quizzes: React.FC = () => {
         }
     }, [user]);
 
+    const [submissionCounts, setSubmissionCounts] = useState<Record<string, number>>({});
+
     const loadQuizzes = async () => {
         if (!user) return;
 
@@ -53,6 +55,14 @@ export const Quizzes: React.FC = () => {
             setIsLoading(true);
             const data = await getQuizzesByTeacher(user.id);
             setQuizzes(data);
+
+            // Fetch submission counts for relevant quizzes
+            const counts: Record<string, number> = {};
+            await Promise.all(data.map(async (quiz) => {
+                const subs = await getQuizSubmissions(quiz.id);
+                counts[quiz.id] = subs.length;
+            }));
+            setSubmissionCounts(counts);
         } catch (error) {
             console.error('Error loading exams:', error);
             addToast({ type: 'error', title: 'Hata', message: 'Sınavlar yüklenemedi.' });
@@ -88,7 +98,9 @@ export const Quizzes: React.FC = () => {
         const matchesClass = !selectedClass || selectedClass === 'all' || quiz.classId === selectedClass;
         const matchesStatus = filterStatus === 'all'
             ? (quiz.status === 'published' || quiz.status === 'closed')
-            : quiz.status === filterStatus;
+            : filterStatus === 'closed'
+                ? (quiz.status === 'closed' || submissionCounts[quiz.id] > 0)
+                : quiz.status === filterStatus;
 
         return matchesClass && matchesStatus;
     });
@@ -168,7 +180,19 @@ export const Quizzes: React.FC = () => {
                         <div
                             key={quiz.id}
                             className={`${styles.quizItem} ${styles.itemPublished}`}
-                            onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}`)}
+                            onClick={() => {
+                                if (quiz.status === 'closed' || submissionCounts[quiz.id] > 0) {
+                                    navigate(ROUTES.TEACHER.REPORTS, {
+                                        state: {
+                                            view: 'quiz_detail',
+                                            quizId: quiz.id,
+                                            classId: quiz.classId
+                                        }
+                                    });
+                                } else {
+                                    navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}`);
+                                }
+                            }}
                         >
                             <div className={styles.quizIcon}>
                                 {quiz.status === 'published' ? <Zap size={20} /> : <CheckCircle size={20} />}
@@ -188,6 +212,14 @@ export const Quizzes: React.FC = () => {
                                     <span>{quiz.createdAt ? new Date(quiz.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                                     <span>•</span>
                                     <span>{quiz.questions?.length || 0} Soru</span>
+                                    {submissionCounts[quiz.id] > 0 && (
+                                        <>
+                                            <span>•</span>
+                                            <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+                                                {submissionCounts[quiz.id]} Katılım
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                                 <div className={styles.statusWrapper}>
                                     {quiz.status === 'draft' && (
@@ -200,16 +232,21 @@ export const Quizzes: React.FC = () => {
                                             Yayına Hazır
                                         </span>
                                     )}
-                                    {quiz.status === 'published' && (
-                                        <span className={`${styles.badge} ${styles.badgePublished}`}>
-                                            Yayınlandı
-                                        </span>
-                                    )}
-                                    {quiz.status === 'closed' && (
+                                    {quiz.status === 'closed' ? (
                                         <span className={`${styles.badge} ${styles.badgeDefault}`}>
                                             Tamamlandı
                                         </span>
-                                    )}
+                                    ) : quiz.status === 'published' ? (
+                                        submissionCounts[quiz.id] > 0 ? (
+                                            <span className={`${styles.badge} ${styles.badgeSuccess}`} style={{ backgroundColor: '#ecfdf5', color: '#10b981' }}>
+                                                Sonuçlar Hazır
+                                            </span>
+                                        ) : (
+                                            <span className={`${styles.badge} ${styles.badgePublished}`}>
+                                                Yayınlandı
+                                            </span>
+                                        )
+                                    ) : null}
                                 </div>
                             </div>
 
@@ -232,6 +269,17 @@ export const Quizzes: React.FC = () => {
                                                 onClick={() => setActiveMenuId(null)}
                                             />
                                             <div className={styles.menuDropdown}>
+                                                {quiz.status === 'closed' || submissionCounts[quiz.id] > 0 ? (
+                                                    <button className={styles.menuItem} onClick={() => navigate(ROUTES.TEACHER.REPORTS, {
+                                                        state: {
+                                                            view: 'quiz_detail',
+                                                            quizId: quiz.id,
+                                                            classId: quiz.classId
+                                                        }
+                                                    })}>
+                                                        Raporu Gör
+                                                    </button>
+                                                ) : null}
                                                 <button className={styles.menuItem} onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}`)}>
                                                     Düzenle
                                                 </button>

@@ -58,7 +58,10 @@ export const useUIStore = create<UIState>()((set) => ({
             return { theme: newTheme };
         }),
 
-    setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+    setSidebarOpen: (sidebarOpen) => set((state) => {
+        if (state.sidebarOpen === sidebarOpen) return state;
+        return { sidebarOpen };
+    }),
 
     toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 

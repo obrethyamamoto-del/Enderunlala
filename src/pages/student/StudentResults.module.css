@@ -5,19 +5,6 @@
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-    animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .loadingWrapper {
@@ -132,7 +119,6 @@
 
 .searchBox {
     flex: 1;
-    position: relative;
     display: flex;
     align-items: center;
 }
@@ -210,6 +196,7 @@
     display: flex;
     align-items: center;
     gap: 24px;
+    flex: 1;
 }
 
 .itemIcon {
@@ -221,10 +208,16 @@
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
+    flex-shrink: 0;
 }
 
 .resultItem:hover .itemIcon {
     background: #F5F3FF;
+}
+
+.itemContent {
+    flex: 1;
+    min-width: 0;
 }
 
 .itemTitle {
@@ -232,6 +225,9 @@
     font-weight: 800;
     color: #0F172A;
     margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .itemMeta {
@@ -263,6 +259,7 @@
     display: flex;
     align-items: center;
     gap: 32px;
+    margin-left: 16px;
 }
 
 .scoreGroup {
@@ -326,13 +323,22 @@
 
 @media (max-width: 1024px) {
     .header {
-        padding: 0 0;
+        margin-bottom: 32px;
+    }
+
+    .title {
+        font-size: 30px;
     }
 }
 
 @media (max-width: 768px) {
     .page {
-        padding: var(--space-4);
+        padding: 16px;
+        /* Mobile: use direct pixel for consistency */
+    }
+
+    .breadcrumb {
+        margin-bottom: 20px;
     }
 
     .header {
@@ -343,59 +349,98 @@
     }
 
     .title {
-        font-size: 28px;
-        letter-spacing: -1px;
+        font-size: 26px;
+        letter-spacing: -0.8px;
+    }
+
+    .subtitle {
+        font-size: 15px;
     }
 
     .statsSummary {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
     }
 
     .statBox {
-        padding: 12px 20px;
+        padding: 12px 16px;
+        gap: 12px;
+        border-radius: 16px;
+    }
+
+    .statIcon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+    }
+
+    .statVal {
+        font-size: 18px;
     }
 
     .filterBar {
         flex-direction: column;
         gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .searchBox input {
+        height: 48px;
+        border-radius: 14px;
     }
 
     .filterBtn {
+        height: 48px;
         width: 100%;
         justify-content: center;
+        border-radius: 14px;
     }
 
     .resultItem {
-        padding: 20px;
+        padding: 16px;
+        border-radius: 20px;
         flex-direction: column;
         align-items: stretch;
-        gap: 16px;
+        gap: 12px;
+    }
+
+    .resultItem:hover {
+        transform: none;
+        /* Disable translate on mobile to prevent weird shifts */
     }
 
     .resultMain {
-        gap: 16px;
+        gap: 12px;
     }
 
     .itemIcon {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
     }
 
     .itemTitle {
-        font-size: 15px;
+        font-size: 16px;
+        white-space: normal;
+        /* Allow wrap on mobile */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .itemMeta {
-        flex-wrap: wrap;
-        gap: 8px 12px;
+        gap: 8px;
+        margin-top: 4px;
     }
 
     .resultRight {
-        justify-content: space-between;
-        padding-top: 16px;
+        margin-left: 0;
+        padding-top: 12px;
         border-top: 1px solid #F1F5F9;
-        gap: 16px;
+        justify-content: space-between;
     }
 
     .scoreGroup {
@@ -403,11 +448,16 @@
         align-items: center;
         width: 100%;
         justify-content: space-between;
+        gap: 12px;
     }
 
     .scorePoints {
-        display: block;
         font-size: 13px;
+    }
+
+    .percentageBadge {
+        padding: 4px 12px;
+        font-size: 14px;
     }
 
     .actionIcon {
@@ -417,10 +467,14 @@
 
 @media (max-width: 480px) {
     .title {
-        font-size: 24px;
+        font-size: 22px;
     }
 
-    .statVal {
-        font-size: 18px;
+    .statsSummary {
+        grid-template-columns: 1fr;
+    }
+
+    .empty {
+        padding: 40px 20px;
     }
 }

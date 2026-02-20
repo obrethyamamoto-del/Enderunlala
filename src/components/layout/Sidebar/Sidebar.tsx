@@ -64,15 +64,17 @@ export const Sidebar: React.FC = () => {
     // Handle resize: auto-open on desktop, auto-close on mobile
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth >= 1024) {
-                setSidebarOpen(true);
-            } else {
-                setSidebarOpen(false);
-            }
+            const isDesktop = window.innerWidth >= 1024;
+            // Only update if the state needs to change
+            useUIStore.getState().setSidebarOpen(isDesktop);
         };
+
+        // Initial check
+        handleResize();
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [setSidebarOpen]);
+    }, []);
 
     const getNavItems = (): NavItem[] => {
         switch (user?.role) {

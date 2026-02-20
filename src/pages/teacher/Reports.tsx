@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     Users,
     ChevronRight,
@@ -31,12 +32,16 @@ type ViewType = 'classes' | 'class_detail' | 'quiz_detail' | 'student_detail';
 export const Reports: React.FC = () => {
     const user = useAuthStore((state) => state.user) as Teacher;
     const addToast = useUIStore((state) => state.addToast);
+    const location = useLocation();
 
     // Navigation State
-    const [view, setView] = useState<ViewType>('classes');
-    const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-    const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
-    const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+    const [view, setView] = useState<ViewType>(() => {
+        if (location.state?.view) return location.state.view;
+        return 'classes';
+    });
+    const [selectedClassId, setSelectedClassId] = useState<string | null>(location.state?.classId || null);
+    const [selectedQuizId, setSelectedQuizId] = useState<string | null>(location.state?.quizId || null);
+    const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(location.state?.submissionId || null);
     const [activeClassFilter, setActiveClassFilter] = useState<string>('all');
 
     const [isLoading, setIsLoading] = useState(true);

@@ -48,6 +48,13 @@ export const StudentResults: React.FC = () => {
         fetchData();
     }, [user]);
 
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredSubmissions = submissions.filter(sub => {
+        const title = quizzes[sub.quizId]?.title?.toLowerCase() || '';
+        return title.includes(searchTerm.toLowerCase());
+    });
+
     const avgSuccess = submissions.length > 0 ?
         Math.round(submissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / submissions.length) : 0;
 
@@ -89,7 +96,12 @@ export const StudentResults: React.FC = () => {
             <div className={styles.filterBar}>
                 <div className={styles.searchBox}>
                     <Search size={18} />
-                    <input type="text" placeholder="Sınav adı ara..." />
+                    <input
+                        type="text"
+                        placeholder="Sınav adı ara..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
                 <div className={styles.filterBtn}>
                     <Filter size={18} />
@@ -98,7 +110,7 @@ export const StudentResults: React.FC = () => {
             </div>
 
             <div className={styles.list}>
-                {submissions.map((sub) => {
+                {filteredSubmissions.map((sub) => {
                     const quiz = quizzes[sub.quizId];
                     const scoreColor = sub.percentage! >= 85 ? '#10b981' : (sub.percentage! >= 60 ? '#f59e0b' : '#ef4444');
 
@@ -136,14 +148,16 @@ export const StudentResults: React.FC = () => {
                         </div>
                     );
                 })}
-                {submissions.length === 0 && (
+                {filteredSubmissions.length === 0 && (
                     <div className={styles.empty}>
                         <Trophy size={48} strokeWidth={1} />
-                        <h3>Henüz bir sınav sonucun yok</h3>
-                        <p>Sınavları çözdükten sonra başarı analizlerini burada görebilirsin.</p>
-                        <Button variant="primary" className={styles.vibrantBtn} onClick={() => navigate('/student/quizzes')}>
-                            Sınavları Çözmeye Başla
-                        </Button>
+                        <h3>{searchTerm ? 'Sonuç bulunamadı' : 'Henüz bir sınav sonucun yok'}</h3>
+                        <p>{searchTerm ? 'Aramanı değiştirmeyi dene.' : 'Sınavları çözdükten sonra başarı analizlerini burada görebilirsin.'}</p>
+                        {!searchTerm && (
+                            <Button variant="primary" className={styles.vibrantBtn} onClick={() => navigate('/student/quizzes')}>
+                                Sınavları Çözmeye Başla
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Select, Loader } from '../../components/common';
-import { School, Radio, Plus, ArrowRight, Wand2, ClipboardCheck, Zap, CheckCircle, Mic } from 'lucide-react';
+import { School, Radio, Plus, ClipboardCheck, Zap, CheckCircle, Mic } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { getTeacherSessions } from '../../services/sessionService';
 import { getQuizzesByTeacher } from '../../services/quizService';
@@ -88,12 +88,7 @@ export const TeacherDashboard: React.FC = () => {
         return quizzes.filter((q: Quiz) => q.classId === selectedClass);
     }, [quizzes, selectedClass]);
 
-    const completedQuizzes = useMemo(() => {
-        return filteredQuizzes
-            .filter((q: Quiz) => q.status === 'closed')
-            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-            .slice(0, 5);
-    }, [filteredQuizzes]);
+
 
     const stats = [
         {
@@ -223,67 +218,7 @@ export const TeacherDashboard: React.FC = () => {
                 ))}
             </div>
 
-            {/* Recently Completed Quizzes Section */}
-            <div className={styles.recentSection}>
-                <div className={styles.recentHeader}>
-                    <h2 className={styles.recentTitle}>Sonuçlanan Sınavlar</h2>
-                    <div
-                        className={styles.viewAll}
-                        onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}?status=closed`)}
-                    >
-                        Tümünü Gör <ArrowRight size={16} />
-                    </div>
-                </div>
 
-                {
-                    completedQuizzes.length === 0 ? (
-                        <div className={styles.recentEmpty}>
-                            <div className={styles.emptyIllustration}>
-                                <div className={styles.illustrationMain}>
-                                    <div className={styles.illustrationFace}>
-                                        <div className={styles.faceEye} />
-                                        <div className={styles.faceEye} />
-                                    </div>
-                                    <div className={styles.illustrationLines}>
-                                        <div className={styles.illuLine} />
-                                        <div className={styles.illuLine} />
-                                    </div>
-                                </div>
-                                <div className={styles.illustrationSearch}>
-                                    <Wand2 size={24} />
-                                </div>
-                            </div>
-                            <h3 className={styles.emptyTitle}>Henüz Sonuç Yok!</h3>
-                            <p className={styles.emptySubtitle}>Henüz sonuçlanmış bir sınav bulunmuyor.</p>
-                        </div>
-                    ) : (
-                        <div className={styles.recentList}>
-                            {completedQuizzes.map((quiz) => (
-                                <div
-                                    key={quiz.id}
-                                    className={styles.recentItem}
-                                    onClick={() => navigate(`${ROUTES.TEACHER.QUIZZES}/${quiz.id}/results`)}
-                                >
-                                    <div className={styles.recentItemIcon}>
-                                        <CheckCircle size={24} />
-                                    </div>
-                                    <div className={styles.recentItemContent}>
-                                        <h3 className={styles.recentItemTitle}>{quiz.title}</h3>
-                                        <div className={styles.recentItemMeta}>
-                                            <span>{quiz.classId || 'Genel'}</span>
-                                            <span>•</span>
-                                            <span>{quiz.questions?.length || 0} Soru</span>
-                                            <span>•</span>
-                                            <span className={styles.detailBadge}>Tamamlandı</span>
-                                        </div>
-                                    </div>
-                                    <ArrowRight size={18} style={{ color: 'var(--color-text-tertiary)' }} />
-                                </div>
-                            ))}
-                        </div>
-                    )
-                }
-            </div>
 
             <ClassManagementModal
                 isOpen={isClassModalOpen}
